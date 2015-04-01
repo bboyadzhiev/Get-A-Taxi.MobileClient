@@ -5,6 +5,7 @@ import com.getataxi.client.comm.models.LocationDM;
 import java.util.List;
 
 
+import retrofit.Callback;
 import retrofit.http.DELETE;
 import retrofit.http.GET;
 import retrofit.http.POST;
@@ -16,17 +17,17 @@ import retrofit.http.Path;
  */
 public interface LocationsAPI {
     @GET("/api/Locations")
-    public List<LocationDM> getLocations();
+    void  getLocations(Callback<List<LocationDM>> callback);
 
     @GET("/api/Locations/{id}")
-    public LocationDM getLocation(@Path("id") int id);
+    void getLocation(@Path("id") int id, Callback<LocationDM> callback);
 
     @POST("/api/Locations")
-    public LocationDM addLocation(LocationDM locationDM);
+    void addLocation(LocationDM locationDM, Callback<LocationDM> callback);
 
     @PUT("/api/Locations")
-    public LocationDM updateLocation(LocationDM locationDM);
+    void updateLocation(LocationDM locationDM, Callback<LocationDM> callback);
 
     @DELETE("/api/Locations/{id}")
-    public LocationDM deleteLocation(@Path("id") int id);
+    void deleteLocation(@Path("id") int id, Callback<LocationDM> callback);
 }

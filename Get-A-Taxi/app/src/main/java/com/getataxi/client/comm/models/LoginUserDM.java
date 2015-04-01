@@ -17,7 +17,10 @@ public class LoginUserDM {
     public String expiresAfter;
 
     @SerializedName("userName")
-    public String username;
+    public String userName;
+
+    @SerializedName("email")
+    public String email;
 
     @SerializedName(".issued")
     public String taken;

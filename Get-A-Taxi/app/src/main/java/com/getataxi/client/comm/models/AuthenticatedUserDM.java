@@ -19,9 +19,6 @@ public class AuthenticatedUserDM extends LoginUserDM {
     @SerializedName("phoneNumber")
     public String phoneNumber;
 
-    @SerializedName("email")
-    public String email;
-
     @SerializedName("userId")
     public String userId;
 

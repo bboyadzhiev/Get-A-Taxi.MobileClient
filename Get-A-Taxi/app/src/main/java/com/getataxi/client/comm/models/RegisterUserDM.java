@@ -13,7 +13,7 @@ public class RegisterUserDM {
     public String email;
 
     @SerializedName("userName")
-    public String username;
+    public String userName;
 
     @SerializedName("firstName")
     public String firstName;

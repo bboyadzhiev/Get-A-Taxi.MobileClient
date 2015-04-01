@@ -5,10 +5,11 @@ import org.parceler.Parcel;
 /**
  * Created by bvb on 30.3.2015 г..
  */
-
-
 @Parcel
 public class LocationDM {
+
+    @SerializedName("locationId")
+    public int locationId;
 
     @SerializedName("lat")
     public double latitude;

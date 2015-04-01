@@ -4,6 +4,7 @@ import com.getataxi.client.comm.models.OrderDM;
 
 import java.util.List;
 
+import retrofit.Callback;
 import retrofit.http.DELETE;
 import retrofit.http.GET;
 import retrofit.http.POST;
@@ -15,20 +16,20 @@ import retrofit.http.Path;
  */
 public interface ClientOrdersAPI {
     @GET("/api/ClientOrders")
-    public List<OrderDM> getOrders();
+    void getOrders(Callback<List<OrderDM>> callback);
 
     @GET("/api/ClientOrders/{page}")
-    public List<OrderDM> getOrdersPage(@Path("page") int page);
+    void getOrdersPage(@Path("page") int page, Callback<List<OrderDM>> callback);
 
     @GET("/api/ClientOrders/{id}")
-    public OrderDM getOrder(@Path("id") int id);
+    void getOrder(@Path("id") int id, Callback<OrderDM> callback);
 
     @POST("/api/ClientOrders")
-    public OrderDM addOrder(OrderDM locationDM);
+    void addOrder(OrderDM locationDM,  Callback<OrderDM> callback);
 
     @PUT("/api/ClientOrders")
-    public OrderDM updateOrder(OrderDM locationDM);
+    void updateOrder(OrderDM locationDM, Callback<OrderDM> callback);
 
     @DELETE("/api/ClientOrders/{id}")
-    public OrderDM deleteOrder(@Path("id") int id);
+    void cancelOrder(@Path("id") int id, Callback<OrderDM> callback);
 }
