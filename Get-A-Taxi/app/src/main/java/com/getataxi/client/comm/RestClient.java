@@ -1,6 +1,5 @@
 package com.getataxi.client.comm;
 
-
 import com.getataxi.client.comm.contracts.AccountAPI;
 import com.getataxi.client.comm.contracts.ClientOrdersAPI;
 import com.getataxi.client.comm.contracts.LocationsAPI;
