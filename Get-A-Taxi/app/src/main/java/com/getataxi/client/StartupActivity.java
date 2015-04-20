@@ -76,9 +76,9 @@ public class StartupActivity extends Activity {
     }
 
     private void proceedWithStartup() {
-        // Starting location service
-        Intent intent = new Intent(StartupActivity.this, LocationService.class);
-        startService(intent);
+//        // Starting location service
+//        Intent intent = new Intent(StartupActivity.this, LocationService.class);
+//        startService(intent);
 
         try {
             Log.e("DATE: ", UserPreferencesManager.tokenDateFormat.parse("Thu, 09 Apr 2015 20:48:26 GMT").toString());

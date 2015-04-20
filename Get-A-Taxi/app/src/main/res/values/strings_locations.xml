@@ -10,5 +10,7 @@
     <string name="select_start_location">Select current location</string>
     <string name="cancel_selection">Cancel</string>
     <string name="stored_location_btn_txt">...</string>
+    <string name="enter_current_address">Enter current address</string>
+    <string name="enter_destination_address">Enter destination address</string>
 
 </resources>

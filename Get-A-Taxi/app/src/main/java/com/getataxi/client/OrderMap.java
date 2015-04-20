@@ -22,6 +22,7 @@ import com.getataxi.client.comm.RestClientManager;
 import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment;
 import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment.SelectLocationDialogListener;
 import com.getataxi.client.comm.models.LocationDM;
+import com.getataxi.client.utils.LocationService;
 import com.getataxi.client.utils.UserPreferencesManager;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -41,22 +42,32 @@ import retrofit.client.Response;
 public class OrderMap extends FragmentActivity implements SelectLocationDialogListener {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
-    public static final String BROADCAST_ACTION = "com.getataxi.client.LocationService";
+    public static final String BROADCAST_ACTION = "com.getataxi.client.location.UPDATED";
     private static final String DESTINATION_DIALOG_TAG = "destinationDialog";
     private static final String START_DIALOG_TAG = "startDialog";
     private double clientLat;
     private double clientLon;
     private Context context;
     private Button confirmLocationButton;
+    private AddressesInputsFragment locationsInputs;
 //    private Button startAddressBtn;
 //    private Button destinationAddressBtn;
     private  SelectLocationDialogFragment locationDialog;
 
+
+    /**
+     * onCreate
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order_map);
         context = this;
+
+        // Starting location service
+        Intent intent = new Intent(OrderMap.this, LocationService.class);
+        startService(intent);
 
         this.confirmLocationButton = (Button)findViewById(R.id.btn_confirm_location);
         Button startAddressBtn = (Button) findViewById(R.id.startAddress_btn);
@@ -74,9 +85,13 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                 ChooseLocationDialog(R.id.select_destination_location);
             }
         });
+
+        locationsInputs = (AddressesInputsFragment)getFragmentManager().findFragmentById(R.id.addressesInputs_fragment);
+        getFragmentManager().beginTransaction().hide(locationsInputs).commit();
         setUpMapIfNeeded();
     }
 
+    // OPTIONS MENU
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -97,11 +112,11 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private boolean ChooseLocationDialog(int id) {
         if (id == R.id.enter_custom_locations) {
             FragmentManager fm = this.getFragmentManager();
-            AddressesInputsFragment inputs = (AddressesInputsFragment)getFragmentManager().findFragmentById(R.id.addressesInputs_fragment);
+           // AddressesInputsFragment inputs = (AddressesInputsFragment)getFragmentManager().findFragmentById(R.id.addressesInputs_fragment);
             //if(inputs != null) {
                 fm.beginTransaction()
                         .setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out)
-                        .show(inputs)
+                        .show(locationsInputs)
                         .commit();
            // }
             return true;
@@ -144,6 +159,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         super.onResume();
         setUpMapIfNeeded();
     }
+
 
     /**
      * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
@@ -208,7 +224,9 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+
             if (action.equals(BROADCAST_ACTION)) {
+                Toast.makeText(context, "LOCATION UPDATED",Toast.LENGTH_LONG);
                 Bundle data = intent.getExtras();
                 clientLat = data.getDouble("Latitude");
                 clientLon = data.getDouble("Longitude");

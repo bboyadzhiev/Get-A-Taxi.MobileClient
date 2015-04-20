@@ -18,7 +18,7 @@ import com.getataxi.client.comm.RestClientManager;
  */
 public class LocationService extends Service
 {
-    public static final String BROADCAST_ACTION = "com.getataxi.client.LocationService";
+    public static final String BROADCAST_ACTION = "com.getataxi.client.location.UPDATED";
     private static final int TIMESPAN = 1000 * 60 * 5; // five minutes
     public LocationManager locationManager;
     public ClientLocationListener listener;

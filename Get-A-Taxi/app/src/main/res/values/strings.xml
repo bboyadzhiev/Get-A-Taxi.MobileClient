@@ -46,6 +46,8 @@
 
     <string name="confirm_location_txt">Confirm location</string>
 
+    <string name="location_updated_action">com.getataxi.client.location.UPDATED</string>
+    
 <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 

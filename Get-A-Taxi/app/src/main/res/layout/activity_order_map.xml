@@ -28,6 +28,7 @@
         android:id="@+id/addressesInputs_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@id/btn_confirm_location"
         android:name="com.getataxi.client.AddressesInputsFragment" />
 
     <!--&lt;!&ndash; Address inputs&ndash;&gt;-->
