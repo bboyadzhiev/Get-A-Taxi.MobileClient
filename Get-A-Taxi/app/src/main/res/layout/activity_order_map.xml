@@ -1,4 +1,79 @@
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" android:id="@+id/map" tools:context=".OrderMap"
-    android:name="com.google.android.gms.maps.SupportMapFragment" />
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".OrderMap"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="bottom" >
+
+    <!-- Google Maps Fragment -->
+    <fragment
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.google.android.gms.maps.SupportMapFragment" />
+
+    <!-- Send GPS data button -->
+    <Button
+        android:id="@+id/btn_confirm_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="@string/confirm_location_txt" />
+
+    <!-- Google Maps Fragment -->
+    <fragment
+        android:id="@+id/addressesInputs_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.getataxi.client.AddressesInputsFragment" />
+
+    <!--&lt;!&ndash; Address inputs&ndash;&gt;-->
+    <!--<RelativeLayout-->
+        <!--android:id="@+id/destinationGroup"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_above="@id/btn_confirm_location"-->
+        <!-->-->
+        <!--<TextView-->
+            <!--android:id="@+id/destinationAddress"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_centerHorizontal="true"-->
+            <!--/>-->
+
+
+        <!--<Button-->
+            <!--android:id="@+id/destinationAddress_btn"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="@string/stored_location_btn_txt"-->
+            <!--android:layout_alignParentRight="true"-->
+            <!--/>-->
+    <!--</RelativeLayout>-->
+<!--<RelativeLayout-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_above="@id/destinationGroup"-->
+    <!-->-->
+    <!--<TextView-->
+        <!--android:id="@+id/startAddress"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--/>-->
+    <!--<Button-->
+        <!--android:id="@+id/startAddress_btn"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="@string/stored_location_btn_txt"-->
+
+        <!--android:layout_alignParentRight="true"-->
+        <!--/>-->
+<!--</RelativeLayout>-->
+
+
+
+</RelativeLayout>

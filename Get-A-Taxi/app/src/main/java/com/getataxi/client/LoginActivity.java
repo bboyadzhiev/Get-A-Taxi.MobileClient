@@ -3,13 +3,13 @@ package com.getataxi.client;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.app.ProgressDialog;
-import android.content.ContentResolver;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -17,8 +17,11 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
@@ -30,20 +33,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.getataxi.client.comm.RestClientManager;
+import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.utils.UserPreferencesManager;
 
-import org.apache.http.client.ClientProtocolException;
+import org.apache.http.HttpStatus;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit.Callback;
 import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
+public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<Cursor> {
 
     /**
      * A dummy authentication store containing known user names and passwords.
@@ -64,9 +71,12 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
     private View mProgressView;
     private View mLoginFormView;
 
+    private Context context;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        context = this;
         setContentView(R.layout.activity_login);
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
@@ -92,8 +102,43 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
             }
         });
 
+        Button gotoRegisterButton = (Button) findViewById(R.id.goto_register_button);
+        gotoRegisterButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gotoRegister();
+            }
+        });
+
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_login, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_exit) {
+            finish();
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void gotoRegister(){
+        Intent gotoRegisterIntent = new Intent(this, RegisterActivity.class);
+        startActivity(gotoRegisterIntent);
     }
 
     private void populateAutoComplete() {
@@ -107,9 +152,9 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
      * errors are presented and no actual login attempt is made.
      */
     public void attemptLogin() {
-        if (mAuthTask != null) {
-            return;
-        }
+//        if (mAuthTask != null) {
+//            return;
+//        }
 
         // Reset errors.
         mEmailView.setError(null);
@@ -149,18 +194,63 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
-            mAuthTask.execute((Void) null);
+            String grantType = "password";
+            LoginUserDM loginUserDM = new LoginUserDM();
+            loginUserDM.email = email;
+            loginUserDM.userName = email;
+            loginUserDM.password = password;
+//            RestClientManager manager = new RestClientManager(getApplicationContext());
+//            manager.login(loginUserDM, grantType);
+//            RestClientManager.login(loginUserDM, grantType, context); // static
+
+            RestClientManager.login(loginUserDM, grantType, new Callback<LoginUserDM>() {
+                @Override
+                public void success(LoginUserDM responseLoginUserDM, Response response) {
+                    int status  = response.getStatus();
+                    if (status == HttpStatus.SC_OK){
+                        try {
+                            Resources res = context.getResources();
+                            String welcome = String.format(res.getString(R.string.login_success_message),
+                                    responseLoginUserDM.userName);
+                            Toast.makeText(context, welcome, Toast.LENGTH_LONG).show();
+                            Thread.sleep(5000);
+                            UserPreferencesManager.saveLoginData(responseLoginUserDM, context);
+
+                            Toast.makeText(context, "Login data stored!", Toast.LENGTH_LONG).show();
+                            Intent orderMap = new Intent(context, OrderMap.class);
+                            orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(orderMap);
+                        } catch (IllegalStateException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+                    // TODO: Fix error message
+                    Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
+//                    String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+//                    Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
+
+                }
+            });
+
+//            mAuthTask = new UserLoginTask(email, password);
+//            mAuthTask.execute((Void) null);
         }
     }
 
     private boolean isEmailValid(String email) {
-        //TODO: Replace this with your own logic
-        return email.contains("@");
+        return email.contains("@") && email.contains(".") && email.length()>5;
     }
 
     private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
         return password.length() > 4;
     }
 
@@ -258,6 +348,7 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
+    @Deprecated
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
         private final String mEmail;
@@ -272,10 +363,10 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
         @Override
         protected Boolean doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
-            RestClientManager manager = new RestClientManager(getApplicationContext());
+            //RestClientManager manager = new RestClientManager(getApplicationContext());
 
             try {
-                manager.login(this.mEmail, this.mPassword);
+               // manager.login(this.mEmail, this.mPassword);
               //  Thread.sleep(2000);
             } catch (RetrofitError e) {
                 return false;
@@ -290,6 +381,7 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 //            }
 
             // TODO: register the new account here.
+
             return true;
         }
 
@@ -307,8 +399,8 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
             showProgress(false);
 
             if (success) {
-               String userName =  UserPreferencesManager.getUsername(getApplicationContext());
-                Toast.makeText(getApplicationContext(), "Welcome, " + userName, Toast.LENGTH_LONG).show();
+               String email =  UserPreferencesManager.getEmail(getApplicationContext());
+                Toast.makeText(getApplicationContext(), "Welcome, " + email, Toast.LENGTH_LONG).show();
                 Intent registerIntent = new Intent(getApplicationContext(), OrderMap.class);
                 startActivity(registerIntent);
                // finish();

@@ -6,6 +6,7 @@ import java.util.List;
 
 
 import retrofit.Callback;
+import retrofit.http.Body;
 import retrofit.http.DELETE;
 import retrofit.http.GET;
 import retrofit.http.POST;
@@ -23,10 +24,10 @@ public interface LocationsAPI {
     void getLocation(@Path("id") int id, Callback<LocationDM> callback);
 
     @POST("/api/Locations")
-    void addLocation(LocationDM locationDM, Callback<LocationDM> callback);
+    void addLocation(@Body LocationDM locationDM, Callback<LocationDM> callback);
 
     @PUT("/api/Locations")
-    void updateLocation(LocationDM locationDM, Callback<LocationDM> callback);
+    void updateLocation(@Body LocationDM locationDM, Callback<LocationDM> callback);
 
     @DELETE("/api/Locations/{id}")
     void deleteLocation(@Path("id") int id, Callback<LocationDM> callback);

@@ -62,19 +62,25 @@ public class RestClient{
 
     public AccountAPI getAccountService(List<NameValuePair> headers){
         this.headers.clear();
-        this.headers = headers;
+        if (headers != null) {
+            this.headers = headers;
+        }
         return accountService;
     }
 
     public ClientOrdersAPI getOrdersService(List<NameValuePair> headers){
         this.headers.clear();
-        this.headers = headers;
+        if (headers != null) {
+            this.headers = headers;
+        }
         return ordersService;
     }
 
     public LocationsAPI getLocationsService(List<NameValuePair> headers){
         this.headers.clear();
-        this.headers = headers;
+        if (headers != null) {
+            this.headers = headers;
+        }
         return locationsService;
     }
 

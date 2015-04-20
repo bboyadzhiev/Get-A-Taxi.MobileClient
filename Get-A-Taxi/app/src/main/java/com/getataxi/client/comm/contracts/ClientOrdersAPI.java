@@ -1,10 +1,11 @@
 package com.getataxi.client.comm.contracts;
 
-import com.getataxi.client.comm.models.OrderDM;
+import com.getataxi.client.comm.models.ClientOrderDM;
 
 import java.util.List;
 
 import retrofit.Callback;
+import retrofit.http.Body;
 import retrofit.http.DELETE;
 import retrofit.http.GET;
 import retrofit.http.POST;
@@ -16,20 +17,20 @@ import retrofit.http.Path;
  */
 public interface ClientOrdersAPI {
     @GET("/api/ClientOrders")
-    void getOrders(Callback<List<OrderDM>> callback);
+    void getOrders(Callback<List<ClientOrderDM>> callback);
 
     @GET("/api/ClientOrders/{page}")
-    void getOrdersPage(@Path("page") int page, Callback<List<OrderDM>> callback);
+    void getOrdersPage(@Path("page") int page, Callback<List<ClientOrderDM>> callback);
 
     @GET("/api/ClientOrders/{id}")
-    void getOrder(@Path("id") int id, Callback<OrderDM> callback);
+    void getOrder(@Path("id") int id, Callback<ClientOrderDM> callback);
 
     @POST("/api/ClientOrders")
-    void addOrder(OrderDM locationDM,  Callback<OrderDM> callback);
+    void addOrder(@Body ClientOrderDM locationDM,  Callback<ClientOrderDM> callback);
 
     @PUT("/api/ClientOrders")
-    void updateOrder(OrderDM locationDM, Callback<OrderDM> callback);
+    void updateOrder(@Body ClientOrderDM locationDM, Callback<ClientOrderDM> callback);
 
     @DELETE("/api/ClientOrders/{id}")
-    void cancelOrder(@Path("id") int id, Callback<OrderDM> callback);
+    void cancelOrder(@Path("id") int id, Callback<ClientOrderDM> callback);
 }

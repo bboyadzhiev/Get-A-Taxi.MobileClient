@@ -12,24 +12,24 @@ public class RegisterUserDM {
     @SerializedName("email")
     public String email;
 
-    @SerializedName("userName")
+    @SerializedName("username")
     public String userName;
 
-    @SerializedName("firstName")
+    @SerializedName("firstname")
     public String firstName;
 
-    @SerializedName("middleName")
+    @SerializedName("middlename")
     public String middleName;
 
-    @SerializedName("lastName")
+    @SerializedName("lastname")
     public String lastName;
 
-    @SerializedName("phoneNumber")
+    @SerializedName("phonenumber")
     public String phoneNumber;
 
     @SerializedName("password")
     public String password;
 
-    @SerializedName("confirmPassword")
+    @SerializedName("confirmpassword")
     public String confirmPassword;
 }

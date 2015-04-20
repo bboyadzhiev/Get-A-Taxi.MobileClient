@@ -9,7 +9,7 @@ import org.parceler.Parcel;
  */
 
 @Parcel
-public class OrderDM {
+public class ClientOrderDM {
     @SerializedName("orderId")
     public int orderId;
 

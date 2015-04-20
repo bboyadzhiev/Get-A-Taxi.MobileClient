@@ -14,17 +14,20 @@ public class LoginUserDM {
     public String password;
 
     @SerializedName("expires_in")
-    public String expiresAfter;
+    public String expires_in;
 
-    @SerializedName("userName")
+    @SerializedName("username")
     public String userName;
 
     @SerializedName("email")
     public String email;
 
     @SerializedName(".issued")
-    public String taken;
+    public String issued;
 
     @SerializedName(".expires")
     public String expires;
+
+    @SerializedName("token")
+    public String token;
 }
