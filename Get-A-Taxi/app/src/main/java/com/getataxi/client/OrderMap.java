@@ -74,28 +74,31 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         setContentView(R.layout.activity_order_map);
         context = this;
 
-//        IntentFilter filter = new IntentFilter();
-//        filter.addAction(BROADCAST_ACTION);
-//        registerReceiver(locationReceiver, filter);
+        // USING SERVICE
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BROADCAST_ACTION);
+        registerReceiver(locationReceiver, filter);
+
+        // Starting location service
+        Intent intent = new Intent(OrderMap.this, LocationService.class);
+        context.startService(intent);
+
+
+        // USING LOCAL MANAGER
+//        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 //
-//        // Starting location service
-//        Intent intent = new Intent(OrderMap.this, LocationService.class);
-//        context.startService(intent);
-
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-        // checking if gps is enabled
-        isGPSEnabled = locationManager
-                .isProviderEnabled(LocationManager.GPS_PROVIDER);
-        if (isGPSEnabled) {
-            // Requesting location update
-            Toast.makeText(context, "Locations enabled",Toast.LENGTH_SHORT);
-            locationManager.requestLocationUpdates(
-
-                    LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-        } else {
-            Toast.makeText(context, "Locations not enabled!",Toast.LENGTH_SHORT);
-        }
+//        // checking if gps is enabled
+//        isGPSEnabled = locationManager
+//                .isProviderEnabled(LocationManager.GPS_PROVIDER);
+//        if (isGPSEnabled) {
+//            // Requesting location update
+//            Toast.makeText(context, "Locations enabled",Toast.LENGTH_SHORT);
+//            locationManager.requestLocationUpdates(
+//
+//                    LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+//        } else {
+//            Toast.makeText(context, "Locations not enabled!",Toast.LENGTH_SHORT);
+//        }
 
 
         this.confirmLocationButton = (Button)findViewById(R.id.btn_confirm_location);
@@ -120,55 +123,55 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         setUpMapIfNeeded();
     }
 
-    LocationListener locationListener = new LocationListener() {
-
-        public void onLocationChanged(Location loc) {
-            // Getting lat and lng
-            latitude = loc.getLatitude();
-            longitude = loc.getLongitude();
-
-            // Placing marker
-            MarkerOptions marker = new MarkerOptions().position(
-                    new LatLng(latitude, longitude)).title("Your location is ");
-
-            mMap.addMarker(marker);
-
-            // Moving camera view
-            CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(new LatLng(latitude, longitude)).zoom(15).build();
-
-            mMap.animateCamera(CameraUpdateFactory
-                    .newCameraPosition(cameraPosition));
-            // Stop using gps
-            stopUsingGPS(locationListener);
-
-            // Send GPS Data Button Click event
-
-            // Closing location listener
-            locationManager.removeUpdates(this);
-            locationManager.removeUpdates(locationListener);
-
-        }
-
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-
-        public void onProviderEnabled(String provider) {
-        }
-
-        public void onProviderDisabled(String provider) {
-        }
-    };
-
-    /**
-     * Stop GPS
-     * @param loc
-     */
-    public void stopUsingGPS(LocationListener loc) {
-        if (locationManager != null) {
-            locationManager.removeUpdates(loc);
-        }
-    }
+//    LocationListener locationListener = new LocationListener() {
+//
+//        public void onLocationChanged(Location loc) {
+//            // Getting lat and lng
+//            latitude = loc.getLatitude();
+//            longitude = loc.getLongitude();
+//
+//            // Placing marker
+//            MarkerOptions marker = new MarkerOptions().position(
+//                    new LatLng(latitude, longitude)).title("Your location is ");
+//
+//            mMap.addMarker(marker);
+//
+//            // Moving camera view
+//            CameraPosition cameraPosition = new CameraPosition.Builder()
+//                    .target(new LatLng(latitude, longitude)).zoom(15).build();
+//
+//            mMap.animateCamera(CameraUpdateFactory
+//                    .newCameraPosition(cameraPosition));
+//            // Stop using gps
+//            stopUsingGPS(locationListener);
+//
+//            // Send GPS Data Button Click event
+//
+//            // Closing location listener
+//            locationManager.removeUpdates(this);
+//            locationManager.removeUpdates(locationListener);
+//
+//        }
+//
+//        public void onStatusChanged(String provider, int status, Bundle extras) {
+//        }
+//
+//        public void onProviderEnabled(String provider) {
+//        }
+//
+//        public void onProviderDisabled(String provider) {
+//        }
+//    };
+//
+//    /**
+//     * Stop GPS
+//     * @param loc
+//     */
+//    public void stopUsingGPS(LocationListener loc) {
+//        if (locationManager != null) {
+//            locationManager.removeUpdates(loc);
+//        }
+//    }
 
     // OPTIONS MENU
     @Override
