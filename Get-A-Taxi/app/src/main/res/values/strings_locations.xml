@@ -12,5 +12,11 @@
     <string name="stored_location_btn_txt">...</string>
     <string name="enter_current_address">Enter current address</string>
     <string name="enter_destination_address">Enter destination address</string>
+    <string name="address_found">Address located successfully!</string>
+    <string name="service_not_available">Address fetching service unavailable!</string>
+    <string name="invalid_lat_long_used">Invalid latitude and longitude values!</string>
+    <string name="invalid_address_used">Address was not recognized!</string>
+    <string name="no_address_found">No address could be located!</string>
+    <string name="location_not_found">Location could not be resolved!</string>
 
 </resources>

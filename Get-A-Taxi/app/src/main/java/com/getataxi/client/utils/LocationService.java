@@ -47,7 +47,7 @@ public class LocationService extends Service
         super.onStartCommand(intent, flags, startId);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         listener = new ClientLocationListener();
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 4000, 0, listener);
+       // locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 4000, 0, listener);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 4000, 0, listener);
         return Service.START_NOT_STICKY;
     }
