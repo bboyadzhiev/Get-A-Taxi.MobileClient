@@ -33,9 +33,9 @@ public class GeocoderIntentService extends IntentService {
         super(name);
     }
 
-    private void deliverAddressToReceiver(int resultCode, String message, String addressTag) {
+    private void deliverAddressToReceiver(int resultCode, String address, String addressTag) {
         Bundle bundle = new Bundle();
-        bundle.putString(Constants.RESULT_DATA_KEY, message);
+        bundle.putString(Constants.RESULT_DATA_KEY, address);
         bundle.putString(Constants.ADDRESS_TAG, addressTag);
         mReceiver.send(resultCode, bundle);
     }
@@ -89,8 +89,7 @@ public class GeocoderIntentService extends IntentService {
 
         } else
         if(geocodeType ==  Constants.GET_ADDRESS) {
-            Location location = intent.getParcelableExtra(
-                    Constants.LOCATION_DATA_EXTRA);
+            Location location = intent.getParcelableExtra(Constants.LOCATION_DATA_EXTRA);
             List<Address> addresses = null;
 
             try {

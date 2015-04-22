@@ -18,5 +18,6 @@
     <string name="invalid_address_used">Address was not recognized!</string>
     <string name="no_address_found">No address could be located!</string>
     <string name="location_not_found">Location could not be resolved!</string>
+    <string name="marker_current_location_title">Your location</string>
 
 </resources>

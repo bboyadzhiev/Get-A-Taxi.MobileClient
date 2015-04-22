@@ -6,16 +6,21 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Point;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcel;
 import android.os.ResultReceiver;
+import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
@@ -30,9 +35,11 @@ import com.getataxi.client.utils.GeocoderIntentService;
 import com.getataxi.client.utils.LocationService;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
@@ -53,9 +60,12 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private Context context;
     private Button confirmLocationButton;
 
+    // Addresses inputs
     private AddressesInputsFragment locationsInputs;
     private EditText startAddressEditText;
     private EditText destinationAddressEditText;
+    private Button startAddressButton;
+    private Button destinationAddressButton;
 
     private  SelectLocationDialogFragment locationDialog;
 
@@ -66,6 +76,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
     protected Location locationToDecode;
     private AddressResultReceiver mResultReceiver;
+    private Marker currentPositionMarker;
 
 
     /**
@@ -78,36 +89,36 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         setContentView(R.layout.activity_order_map);
         context = this;
 
-        // USING SERVICE
+        // Start location service
+        Intent intent = new Intent(OrderMap.this, LocationService.class);
+        context.startService(intent);
+
+        // Register for Location Service broadcasts
         IntentFilter filter = new IntentFilter();
         filter.addAction(BROADCAST_ACTION);
         registerReceiver(locationReceiver, filter);
 
-        // Starting location service
-        Intent intent = new Intent(OrderMap.this, LocationService.class);
-        context.startService(intent);
-
         this.confirmLocationButton = (Button)findViewById(R.id.btn_confirm_location);
         confirmLocationButton.setEnabled(false);
 
+        // Addresses inputs
         this.startAddressEditText = (EditText) findViewById(R.id.startAddress);
         this.destinationAddressEditText = (EditText) findViewById(R.id.destinationAddress);
+        this.startAddressButton = (Button) findViewById(R.id.startAddress_btn);
+        this.destinationAddressButton = (Button) findViewById(R.id.destinationAddress_btn);
 
-        Button startAddressBtn = (Button) findViewById(R.id.startAddress_btn);
-        startAddressBtn.setOnClickListener(new View.OnClickListener() {
+        startAddressButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                // ChooseLocationDialog(R.id.select_start_location);
                 String location = startAddressEditText.getText().toString();
                 if (location != null && !location.equals("")) {
 
-
                 }
             }
         });
 
-        Button destinationAddressBtn = (Button) findViewById(R.id.destinationAddress_btn);
-        destinationAddressBtn.setOnClickListener(new View.OnClickListener() {
+        destinationAddressButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //ChooseLocationDialog(R.id.select_destination_location);
@@ -253,7 +264,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         RestClientManager.getLocations(context, new Callback<List<LocationDM>>() {
             @Override
             public void success(List<LocationDM> locationDMs, Response response) {
-                mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+              //  mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
                 locationDM21s = locationDMs;
                 Log.d("ORDER_MAP", "SUCCESS_GETTING_LOCATIONS");
             }
@@ -265,9 +276,47 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         });
     }
 
+    public void animateMarker(final Marker marker, final LatLng toPosition,
+                              final boolean hideMarker) {
+        final Handler handler = new Handler();
+        final long start = SystemClock.uptimeMillis();
+        Projection proj = mMap.getProjection();
+        Point startPoint = proj.toScreenLocation(marker.getPosition());
+        final LatLng startLatLng = proj.fromScreenLocation(startPoint);
+        final long duration = 500;
+
+        final Interpolator interpolator = new LinearInterpolator();
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                long elapsed = SystemClock.uptimeMillis() - start;
+                float t = interpolator.getInterpolation((float) elapsed
+                        / duration);
+                double lng = t * toPosition.longitude + (1 - t)
+                        * startLatLng.longitude;
+                double lat = t * toPosition.latitude + (1 - t)
+                        * startLatLng.latitude;
+                marker.setPosition(new LatLng(lat, lng));
+
+                if (t < 1.0) {
+                    // Post again 16ms later.
+                    handler.postDelayed(this, 16);
+                } else {
+                    if (hideMarker) {
+                        marker.setVisible(false);
+                    } else {
+                        marker.setVisible(true);
+                    }
+                }
+            }
+        });
+    }
 
 
-
+    /**
+     * The receiver for the Location Service location update broadcasts
+     */
 
     private final BroadcastReceiver locationReceiver = new BroadcastReceiver() {
 
@@ -281,21 +330,28 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                 clientLat = data.getDouble("Latitude");
                 clientLon = data.getDouble("Longitude");
 
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                        new LatLng(clientLat, clientLon), 13));
+                LatLng currentPosition =  new LatLng(clientLat, clientLon);
+
+
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentPosition, 13));
 
                 CameraPosition cameraPosition = new CameraPosition.Builder()
-                        .target(new LatLng(clientLat, clientLon))      // Sets the center of the map to location user
+                        .target(currentPosition)      // Sets the center of the map to location user
                         .zoom(17)                   // Sets the zoom
                      //   .bearing(90)                // Sets the orientation of the camera to east
                      //   .tilt(40)                   // Sets the tilt of the camera to 30 degrees
                         .build();                   // Creates a CameraPosition from the builder
                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-                MarkerOptions marker = new MarkerOptions().position(
-                        new LatLng(clientLat, clientLon)).title("Your location: ");
+                if (currentPositionMarker == null){
+                    String title = getResources().getString(R.string.marker_current_location_title);
+                    MarkerOptions marker = new MarkerOptions().position(
+                            new LatLng(clientLat, clientLon)).title(title);
 
-                mMap.addMarker(marker);
+                    currentPositionMarker = mMap.addMarker(marker);
+                } else {
+                    animateMarker(currentPositionMarker, currentPosition, false);
+                }
 
                 confirmLocationButton.setEnabled(true);
                 confirmLocationButton.setOnClickListener(new View.OnClickListener() {
@@ -309,13 +365,27 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     };
 
 
-    protected void startLocationDecodeIntentService(String addressTag) {
+    protected void startAddressDecodeIntentService(String addressTag) {
         Intent intent = new Intent(this, GeocoderIntentService.class);
         intent.putExtra(Constants.RECEIVER, mResultReceiver);
+        intent.putExtra(Constants.GEOCODE_TYPE, Constants.GET_LOCATION);
+        intent.putExtra(Constants.LOCATION_DATA_EXTRA, addressTag);
         intent.putExtra(Constants.ADDRESS_TAG, addressTag);
-        intent.putExtra(Constants.LOCATION_DATA_EXTRA, locationToDecode);
         startService(intent);
     }
+    protected void startLocationDecodeIntentService(Location location) {
+        Intent intent = new Intent(this, GeocoderIntentService.class);
+        intent.putExtra(Constants.RECEIVER, mResultReceiver);
+        intent.putExtra(Constants.GEOCODE_TYPE, Constants.GET_ADDRESS);
+//        Parcel p = Parcel.obtain();
+//        location.writeToParcel(p, 0);
+//        final byte[] b = p.marshall();      //now you've got bytes
+//        p.recycle();
+//        intent.putExtra(Constants.LOCATION_DATA_EXTRA, b);
+        intent.putExtra(Constants.LOCATION_DATA_EXTRA, location);
+        startService(intent);
+    }
+
 
     /**
      *
