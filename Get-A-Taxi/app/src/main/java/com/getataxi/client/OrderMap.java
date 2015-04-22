@@ -11,7 +11,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Parcel;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
@@ -31,7 +30,7 @@ import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment;
 import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment.SelectLocationDialogListener;
 import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.utils.Constants;
-import com.getataxi.client.utils.GeocoderIntentService;
+import com.getataxi.client.utils.GeocodeIntentService;
 import com.getataxi.client.utils.LocationService;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -51,9 +50,9 @@ import retrofit.client.Response;
 public class OrderMap extends FragmentActivity implements SelectLocationDialogListener {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
-    public static final String BROADCAST_ACTION = "com.getataxi.client.location.UPDATED";
-    private static final String DESTINATION_DIALOG_TAG = "destinationDialog";
-    private static final String START_DIALOG_TAG = "startDialog";
+
+    private String destinationDialogTag;
+    private String startDialogTag;
 
     private double clientLat;
     private double clientLon;
@@ -75,7 +74,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     LocationManager locationManager;
 
     protected Location locationToDecode;
-    private AddressResultReceiver mResultReceiver;
+    private GeocodeResultReceiver mResultReceiver;
     private Marker currentPositionMarker;
 
 
@@ -95,7 +94,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
         // Register for Location Service broadcasts
         IntentFilter filter = new IntentFilter();
-        filter.addAction(BROADCAST_ACTION);
+        filter.addAction(Constants.LOCATION_UPDATED);
         registerReceiver(locationReceiver, filter);
 
         this.confirmLocationButton = (Button)findViewById(R.id.btn_confirm_location);
@@ -121,11 +120,12 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         destinationAddressButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //ChooseLocationDialog(R.id.select_destination_location);
+                String destinationAddress = destinationAddressEditText.getText().toString();
+                if(!destinationAddress.isEmpty()){
+                    startAddressGeocode(destinationDialogTag, destinationAddress);
+                }
             }
         });
-
-
 
         locationsInputs = (AddressesInputsFragment)getFragmentManager().findFragmentById(R.id.addressesInputs_fragment);
         getFragmentManager().beginTransaction().hide(locationsInputs).commit();
@@ -145,9 +145,6 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         getMenuInflater().inflate(R.menu.menu_order, menu);
         return true;
     }
-
-
-
 
 
     @Override
@@ -171,14 +168,16 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         }
         if (id == R.id.select_destination_location) {
             locationDialog= new SelectLocationDialogFragment();
+            destinationDialogTag = locationDialog.getTag();
             FragmentManager fm = this.getFragmentManager();
-            locationDialog.show(fm, DESTINATION_DIALOG_TAG);
+            locationDialog.show(fm, destinationDialogTag);
             return true;
         }
         if (id == R.id.select_start_location) {
             locationDialog= new SelectLocationDialogFragment();
+            startDialogTag = locationDialog.getTag();
             FragmentManager fm = this.getFragmentManager();
-            locationDialog.show(fm, START_DIALOG_TAG);
+            locationDialog.show(fm, startDialogTag);
             return true;
         }
         return false;
@@ -192,10 +191,10 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {
         String tag = dialog.getTag();
-        if (tag == DESTINATION_DIALOG_TAG ){
+        if (tag == destinationDialogTag){
 
         }
-        if (tag == START_DIALOG_TAG ){
+        if (tag == startDialogTag){
 
         }
         dialog.dismiss();
@@ -205,10 +204,10 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     public void onLocationSelect(DialogFragment dialog, LocationDM locationDM) {
         // Location has been selected
         String tag = dialog.getTag();
-        if (tag == DESTINATION_DIALOG_TAG ){
+        if (tag == destinationDialogTag){
 
         }
-        if (tag == START_DIALOG_TAG ){
+        if (tag == startDialogTag){
 
         }
         dialog.dismiss();
@@ -324,11 +323,11 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
-            if (action.equals(BROADCAST_ACTION)) {
+            if (action.equals(Constants.LOCATION_UPDATED)) {
                 Toast.makeText(context, "LOCATION UPDATED",Toast.LENGTH_LONG);
                 Bundle data = intent.getExtras();
-                clientLat = data.getDouble("Latitude");
-                clientLon = data.getDouble("Longitude");
+                clientLat = data.getDouble(Constants.LATITUDE);
+                clientLon = data.getDouble(Constants.LONGITUDE);
 
                 LatLng currentPosition =  new LatLng(clientLat, clientLon);
 
@@ -345,12 +344,14 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
                 if (currentPositionMarker == null){
                     String title = getResources().getString(R.string.marker_current_location_title);
-                    MarkerOptions marker = new MarkerOptions().position(
-                            new LatLng(clientLat, clientLon)).title(title);
+                    MarkerOptions marker = new MarkerOptions()
+                            .position(new LatLng(clientLat, clientLon))
+                            .title(title);
 
                     currentPositionMarker = mMap.addMarker(marker);
                 } else {
                     animateMarker(currentPositionMarker, currentPosition, false);
+                    
                 }
 
                 confirmLocationButton.setEnabled(true);
@@ -365,18 +366,30 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     };
 
 
-    protected void startAddressDecodeIntentService(String addressTag) {
-        Intent intent = new Intent(this, GeocoderIntentService.class);
-        intent.putExtra(Constants.RECEIVER, mResultReceiver);
-        intent.putExtra(Constants.GEOCODE_TYPE, Constants.GET_LOCATION);
-        intent.putExtra(Constants.LOCATION_DATA_EXTRA, addressTag);
+    // GEOCODE METHODS AND RECEIVER
+    /**
+     * Initiates geocode of an address (get the address's location)
+     * Uses Geocode Service
+     * @param addressTag Denotes the type of address -
+     */
+    protected void startAddressGeocode(String addressTag, String addressToGeocode ) {
+        Intent intent = new Intent(this, GeocodeIntentService.class);
+        intent.putExtra(Constants.GEOCODE_RECEIVER, mResultReceiver);
+        intent.putExtra(Constants.GEOCODE_TYPE, Constants.GEOCODE);
+        intent.putExtra(Constants.ADDRESS_DATA_EXTRA, addressToGeocode);
         intent.putExtra(Constants.ADDRESS_TAG, addressTag);
         startService(intent);
     }
-    protected void startLocationDecodeIntentService(Location location) {
-        Intent intent = new Intent(this, GeocoderIntentService.class);
-        intent.putExtra(Constants.RECEIVER, mResultReceiver);
-        intent.putExtra(Constants.GEOCODE_TYPE, Constants.GET_ADDRESS);
+
+    /**
+     * Initiates reverse geocode of a location (get the location's address)
+     * Uses Geocode Service
+     * @param location
+     */
+    protected void startLocationReverseGeocode(Location location) {
+        Intent intent = new Intent(this, GeocodeIntentService.class);
+        intent.putExtra(Constants.GEOCODE_RECEIVER, mResultReceiver);
+        intent.putExtra(Constants.GEOCODE_TYPE, Constants.REVERSE_GEOCODE);
 //        Parcel p = Parcel.obtain();
 //        location.writeToParcel(p, 0);
 //        final byte[] b = p.marshall();      //now you've got bytes
@@ -388,13 +401,12 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
 
     /**
-     *
+     * Receive Geocode result from Geocode Service
      */
-    class AddressResultReceiver extends ResultReceiver {
-        public AddressResultReceiver(Handler handler) {
+    class GeocodeResultReceiver extends ResultReceiver {
+        public GeocodeResultReceiver(Handler handler) {
             super(handler);
         }
-
         @Override
         protected void onReceiveResult(int resultCode, Bundle resultData) {
             // Display the address string
@@ -403,34 +415,35 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             String addressTag = resultData.getString(Constants.ADDRESS_TAG);
             int geocodeType = resultData.getInt(Constants.GEOCODE_TYPE);
             if (resultCode == Constants.SUCCESS_RESULT) {
-
-                if(geocodeType == Constants.GET_ADDRESS) {
-                    String result = resultData.getString(Constants.RESULT_DATA_KEY);
-                    if (addressTag == DESTINATION_DIALOG_TAG) {
+                if(geocodeType == Constants.REVERSE_GEOCODE) {
+                    String result = resultData.getString(Constants.ADDRESS_DATA_EXTRA);
+                    if (addressTag == destinationDialogTag) {
                         destinationAddressEditText.setText(result);
                     }
 
-                    if (addressTag == START_DIALOG_TAG) {
+                    if (addressTag == startDialogTag) {
                         startAddressEditText.setText(result);
                     }
-                }else if(geocodeType == Constants.GET_LOCATION){
-                    Location result = resultData.getParcelable(Constants.RESULT_DATA_KEY);
-                    if (addressTag == DESTINATION_DIALOG_TAG) {
+                    // Show a toast message if an address was found.
+                    Toast.makeText(context, R.string.address_found, Toast.LENGTH_LONG);
+
+                }else if(geocodeType == Constants.GEOCODE){
+                    Location result = resultData.getParcelable(Constants.LOCATION_DATA_EXTRA);
+                    if (addressTag == destinationDialogTag) {
                         // TODO: update destination marker
                     }
 
-                    if (addressTag == START_DIALOG_TAG) {
+                    if (addressTag == startDialogTag) {
                         // TODO: update start marker
                     }
+                    // Show a toast message if an address was found.
+                    Toast.makeText(context, R.string.location_found, Toast.LENGTH_LONG);
                 }
 
-            // Show a toast message if an address was found.
-               // showToast(getString(R.string.address_found));
             } else if (resultCode == Constants.FAILURE_RESULT){
-                if(geocodeType == Constants.GET_ADDRESS) {
-                    String result = resultData.getString(Constants.RESULT_DATA_KEY);
-                    Toast.makeText(context, result, Toast.LENGTH_LONG);
-                } else if(resultCode == Constants.GET_LOCATION){
+                if(geocodeType == Constants.REVERSE_GEOCODE) {
+                    Toast.makeText(context, R.string.address_not_found, Toast.LENGTH_LONG);
+                } else if(geocodeType == Constants.GEOCODE){
                     Toast.makeText(context, R.string.location_not_found, Toast.LENGTH_LONG);
                 }
             }

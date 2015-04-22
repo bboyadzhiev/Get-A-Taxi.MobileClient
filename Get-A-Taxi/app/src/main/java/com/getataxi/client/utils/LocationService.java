@@ -18,8 +18,7 @@ import com.getataxi.client.comm.RestClientManager;
  */
 public class LocationService extends Service
 {
-    public static final String BROADCAST_ACTION = "com.getataxi.client.location.UPDATED";
-    private static final int TIMESPAN = 1000 * 60 * 5; // five minutes
+
     public LocationManager locationManager;
     public ClientLocationListener listener;
     public Location previousBestLocation = null;
@@ -33,7 +32,7 @@ public class LocationService extends Service
     public void onCreate()
     {
         super.onCreate();
-        intent = new Intent(BROADCAST_ACTION);
+        intent = new Intent(Constants.LOCATION_UPDATED);
     }
 
     @Override
@@ -66,8 +65,8 @@ public class LocationService extends Service
 
         // Check whether the new location fix is newer or older
         long timeDelta = location.getTime() - currentBestLocation.getTime();
-        boolean isSignificantlyNewer = timeDelta > TIMESPAN;
-        boolean isSignificantlyOlder = timeDelta < -TIMESPAN;
+        boolean isSignificantlyNewer = timeDelta > Constants.LOCATION_TIMEOUT;
+        boolean isSignificantlyOlder = timeDelta < -Constants.LOCATION_TIMEOUT;
         boolean isNewer = timeDelta > 0;
 
         // If it's been more than two minutes since the current location, use the new location
@@ -141,15 +140,11 @@ public class LocationService extends Service
                 // Getting latitude and longitude
                 latitude = loc.getLatitude();
                 longitude = loc.getLongitude();
-                intent.putExtra("Latitude", latitude);
-                intent.putExtra("Longitude", longitude);
+                intent.putExtra(Constants.LATITUDE, latitude);
+                intent.putExtra(Constants.LONGITUDE, longitude);
 
                 // Notify all interested parties
                 sendBroadcast(intent);
-
-                // TODO: Update client location to server if needed
-               // RestClientManager manager = new RestClientManager(getApplicationContext());
-               // manager.updateLocation(loc.getLatitude(), loc.getLongitude());
             }
         }
 

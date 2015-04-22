@@ -60,7 +60,7 @@
         </activity>
         <service android:name=".utils.LocationService"/>
         <service
-            android:name=".utils.GeocoderIntentService"
+            android:name=".utils.GeocodeIntentService"
             android:exported="false"/>
     </application>
 
