@@ -76,6 +76,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     protected Location locationToDecode;
     private GeocodeResultReceiver mResultReceiver;
     private Marker currentPositionMarker;
+    private boolean reportLocationEnabled = true;
 
 
     /**
@@ -351,7 +352,9 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                     currentPositionMarker = mMap.addMarker(marker);
                 } else {
                     animateMarker(currentPositionMarker, currentPosition, false);
-                    
+                    if(reportLocationEnabled){
+                       // RestClientManager.updateClientLocation(clientLat, clientLon);
+                    }
                 }
 
                 confirmLocationButton.setEnabled(true);

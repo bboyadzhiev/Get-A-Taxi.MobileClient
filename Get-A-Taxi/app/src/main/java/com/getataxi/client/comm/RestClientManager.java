@@ -277,4 +277,9 @@ if (error.getResponse().getStatus() == 401){
 
     }
 
+    public static void updateClientLocation(double lat, double lon){
+
+
+    }
+
 }
