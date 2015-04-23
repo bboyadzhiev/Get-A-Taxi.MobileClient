@@ -140,8 +140,9 @@ public class LocationService extends Service
                 // Getting latitude and longitude
                 latitude = loc.getLatitude();
                 longitude = loc.getLongitude();
-                intent.putExtra(Constants.LATITUDE, latitude);
-                intent.putExtra(Constants.LONGITUDE, longitude);
+                //intent.putExtra(Constants.LATITUDE, latitude);
+                //intent.putExtra(Constants.LONGITUDE, longitude);
+                intent.putExtra(Constants.LOCATION, loc);
 
                 // Notify all interested parties
                 sendBroadcast(intent);

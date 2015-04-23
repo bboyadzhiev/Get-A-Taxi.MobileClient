@@ -40,9 +40,11 @@ public class GeocodeIntentService extends IntentService {
         mReceiver.send(resultCode, bundle);
     }
 
-    private void deliverLocationToReceiver(int resultCode, Location location, String addressTag) {
+    private void deliverLocationToReceiver(int resultCode, Address geocodedAddress, String addressTag) {
         Bundle bundle = new Bundle();
-        bundle.putParcelable(Constants.LOCATION_DATA_EXTRA, location);
+        if ( geocodedAddress != null) {
+            bundle.putParcelable(Constants.LOCATION_DATA_EXTRA, geocodedAddress);
+        }
         bundle.putString(Constants.ADDRESS_TAG, addressTag);
         mReceiver.send(resultCode, bundle);
     }
@@ -54,41 +56,29 @@ public class GeocodeIntentService extends IntentService {
         int geocodeType = intent.getIntExtra(Constants.GEOCODE_TYPE, Constants.GEOCODE);
         String addressTag = intent.getStringExtra(Constants.ADDRESS_TAG);
         if(geocodeType ==  Constants.GEOCODE) {
-            String addressToDecode = intent.getStringExtra(Constants.LOCATION_DATA_EXTRA);
-            Location decodedLocation = new Location("");
-            boolean success = false;
+            String addressToGeocode = intent.getStringExtra(Constants.LOCATION_DATA_EXTRA);
+            List<Address> addresses = null;
             try {
-
-                List<Address> addresses;
-                addresses = geocoder.getFromLocationName(addressToDecode, 1);
-                if(addresses.size() > 0) {
-                    double latitude= addresses.get(0).getLatitude();
-                    double longitude= addresses.get(0).getLongitude();
-                    decodedLocation.setLatitude(latitude);
-                    decodedLocation.setLongitude(longitude);
-                    success = true;
-                }
-
+                addresses = geocoder.getFromLocationName(addressToGeocode, 1);
             } catch (IOException e) {
                 errorMessage = getString(R.string.service_not_available);
                 Log.e(TAG, errorMessage, e);
             } catch (IllegalArgumentException illegalArgumentException) {
                 // Catch invalid latitude or longitude values.
                 errorMessage = getString(R.string.invalid_address_used);
-                Log.e(TAG, errorMessage + ". " + "Address: " + addressToDecode, illegalArgumentException);
+                Log.e(TAG, errorMessage + ". " + "Address: " + addressToGeocode, illegalArgumentException);
             }
 
-            if(success){
-                deliverLocationToReceiver(Constants.SUCCESS_RESULT, decodedLocation, addressTag);
-            }else{
-                deliverLocationToReceiver(Constants.FAILURE_RESULT, decodedLocation, addressTag);
+            if(addresses != null && addresses.size() > 0) {
+                Address geocodedAddress = addresses.get(0);
+                deliverLocationToReceiver(Constants.SUCCESS_RESULT, geocodedAddress, addressTag);
+            } else {
+                deliverLocationToReceiver(Constants.FAILURE_RESULT, null, addressTag);
             }
 
-        } else
-        if(geocodeType ==  Constants.REVERSE_GEOCODE) {
+        } else if(geocodeType ==  Constants.REVERSE_GEOCODE) {
             Location location = intent.getParcelableExtra(Constants.LOCATION_DATA_EXTRA);
             List<Address> addresses = null;
-
             try {
                 addresses = geocoder.getFromLocation(
                         location.getLatitude(),
@@ -101,10 +91,10 @@ public class GeocodeIntentService extends IntentService {
                 Log.e(TAG, errorMessage, ioException);
             } catch (IllegalArgumentException illegalArgumentException) {
                 // Catch invalid latitude or longitude values.
-                errorMessage = getString(R.string.invalid_lat_long_used);
-                Log.e(TAG, errorMessage + ". " +
-                        "Latitude = " + location.getLatitude() +
-                        ", Longitude = " + location.getLongitude(),
+                errorMessage = getString(R.string.invalid_lat_long_used) +" " +
+                        "Lat: " + location.getLatitude() +
+                        ", Lon: " + location.getLongitude();
+                Log.e(TAG, errorMessage ,
                         illegalArgumentException);
             }
             // Handle case where no address was found.

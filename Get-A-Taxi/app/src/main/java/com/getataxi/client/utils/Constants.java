@@ -30,8 +30,9 @@ public final class Constants {
 
     //LOCATION SERVICE
     public static final String LOCATION_UPDATED = PACKAGE_NAME + "LOCATION_UPDATED";
-    public static final String LATITUDE = PACKAGE_NAME + ".LATITUDE";
-    public static final String LONGITUDE = PACKAGE_NAME + ".LONGITUDE";
+    public static final String LOCATION = PACKAGE_NAME + ".LOCATION";
+    //public static final String LATITUDE = PACKAGE_NAME + ".LATITUDE";
+    //public static final String LONGITUDE = PACKAGE_NAME + ".LONGITUDE";
     public static final int LOCATION_TIMEOUT = 1000 * 60 * 5; // five minutes;
 
 

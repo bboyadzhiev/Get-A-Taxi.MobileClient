@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Point;
+import android.location.Address;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.os.Handler;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,6 +43,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit.Callback;
@@ -54,8 +57,10 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private String destinationDialogTag;
     private String startDialogTag;
 
-    private double clientLat;
-    private double clientLon;
+    private Location clientLocation;
+    //private double clientLat;
+    //private double clientLon;
+
     private Context context;
     private Button confirmLocationButton;
 
@@ -76,6 +81,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     protected Location locationToDecode;
     private GeocodeResultReceiver mResultReceiver;
     private Marker currentPositionMarker;
+    private Marker destinationPositionMarker;
     private boolean reportLocationEnabled = true;
 
 
@@ -100,6 +106,12 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
         this.confirmLocationButton = (Button)findViewById(R.id.btn_confirm_location);
         confirmLocationButton.setEnabled(false);
+        confirmLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
 
         // Addresses inputs
         this.startAddressEditText = (EditText) findViewById(R.id.startAddress);
@@ -111,9 +123,9 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             @Override
             public void onClick(View v) {
                // ChooseLocationDialog(R.id.select_start_location);
-                String location = startAddressEditText.getText().toString();
-                if (location != null && !location.equals("")) {
-
+                String startAddress = startAddressEditText.getText().toString();
+                if (!startAddress.isEmpty()) {
+                    initiateAddressGeocode(startDialogTag, startAddress);
                 }
             }
         });
@@ -123,7 +135,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             public void onClick(View v) {
                 String destinationAddress = destinationAddressEditText.getText().toString();
                 if(!destinationAddress.isEmpty()){
-                    startAddressGeocode(destinationDialogTag, destinationAddress);
+                    initiateAddressGeocode(destinationDialogTag, destinationAddress);
                 }
             }
         });
@@ -138,6 +150,8 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
         setUpMapIfNeeded();
     }
+
+
 
     // OPTIONS MENU
     @Override
@@ -317,7 +331,6 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     /**
      * The receiver for the Location Service location update broadcasts
      */
-
     private final BroadcastReceiver locationReceiver = new BroadcastReceiver() {
 
         @Override
@@ -325,49 +338,53 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             String action = intent.getAction();
 
             if (action.equals(Constants.LOCATION_UPDATED)) {
-                Toast.makeText(context, "LOCATION UPDATED",Toast.LENGTH_LONG);
+                //Toast.makeText(context, "LOCATION UPDATED",Toast.LENGTH_LONG);
                 Bundle data = intent.getExtras();
-                clientLat = data.getDouble(Constants.LATITUDE);
-                clientLon = data.getDouble(Constants.LONGITUDE);
+
+                clientLocation = data.getParcelable(Constants.LOCATION);
+
+                // Reverse geocode for an address
+                initiateLocationReverseGeocode(clientLocation);
+
+                double clientLat = clientLocation.getLatitude(); //data.getDouble(Constants.LATITUDE);
+                double clientLon = clientLocation.getLongitude();//data.getDouble(Constants.LONGITUDE);
 
                 LatLng currentPosition =  new LatLng(clientLat, clientLon);
+                currentPositionMarker = updateMarker(currentPositionMarker, currentPosition, getResources().getString(R.string.marker_current_location_title));
 
-
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentPosition, 13));
-
-                CameraPosition cameraPosition = new CameraPosition.Builder()
-                        .target(currentPosition)      // Sets the center of the map to location user
-                        .zoom(17)                   // Sets the zoom
-                     //   .bearing(90)                // Sets the orientation of the camera to east
-                     //   .tilt(40)                   // Sets the tilt of the camera to 30 degrees
-                        .build();                   // Creates a CameraPosition from the builder
-                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
-                if (currentPositionMarker == null){
-                    String title = getResources().getString(R.string.marker_current_location_title);
-                    MarkerOptions marker = new MarkerOptions()
-                            .position(new LatLng(clientLat, clientLon))
-                            .title(title);
-
-                    currentPositionMarker = mMap.addMarker(marker);
-                } else {
-                    animateMarker(currentPositionMarker, currentPosition, false);
-                    if(reportLocationEnabled){
-                       // RestClientManager.updateClientLocation(clientLat, clientLon);
-                    }
+                if(reportLocationEnabled){
+                    // RestClientManager.updateClientLocation(clientLat, clientLon);
                 }
-
                 confirmLocationButton.setEnabled(true);
-                confirmLocationButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
 
-                    }
-                });
             }
         }
     };
 
+
+    private Marker updateMarker(Marker marker, LatLng location, String title ){
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
+
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(location)      // Sets the center of the map to location user
+                .zoom(17)                   // Sets the zoom
+                        //   .bearing(90)                // Sets the orientation of the camera to east
+                        //   .tilt(40)                   // Sets the tilt of the camera to 30 degrees
+                .build();                   // Creates a CameraPosition from the builder
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+        if (marker == null){
+
+            MarkerOptions markerOpts = new MarkerOptions()
+                    .position(location)
+                    .title(title);
+
+            marker = mMap.addMarker(markerOpts);
+        } else {
+            animateMarker(marker, location, false);
+        }
+        return marker;
+    }
 
     // GEOCODE METHODS AND RECEIVER
     /**
@@ -375,7 +392,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
      * Uses Geocode Service
      * @param addressTag Denotes the type of address -
      */
-    protected void startAddressGeocode(String addressTag, String addressToGeocode ) {
+    protected void initiateAddressGeocode(String addressTag, String addressToGeocode) {
         Intent intent = new Intent(this, GeocodeIntentService.class);
         intent.putExtra(Constants.GEOCODE_RECEIVER, mResultReceiver);
         intent.putExtra(Constants.GEOCODE_TYPE, Constants.GEOCODE);
@@ -389,7 +406,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
      * Uses Geocode Service
      * @param location
      */
-    protected void startLocationReverseGeocode(Location location) {
+    protected void initiateLocationReverseGeocode(Location location) {
         Intent intent = new Intent(this, GeocodeIntentService.class);
         intent.putExtra(Constants.GEOCODE_RECEIVER, mResultReceiver);
         intent.putExtra(Constants.GEOCODE_TYPE, Constants.REVERSE_GEOCODE);
@@ -431,9 +448,21 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                     Toast.makeText(context, R.string.address_found, Toast.LENGTH_LONG);
 
                 }else if(geocodeType == Constants.GEOCODE){
-                    Location result = resultData.getParcelable(Constants.LOCATION_DATA_EXTRA);
+                    Address address = resultData.getParcelable(Constants.LOCATION_DATA_EXTRA);
+
+                    ArrayList<String> addressFragments = new ArrayList<String>();
+
+                    for(int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+                        addressFragments.add(address.getAddressLine(i));
+                    }
+
+                    String resolvedAddress = TextUtils.join(System.getProperty("line.separator"), addressFragments);
+
                     if (addressTag == destinationDialogTag) {
-                        // TODO: update destination marker
+                        // TODO: update  text edit
+                        LatLng destination = new LatLng(address.getLatitude(), address.getLongitude());
+                        destinationPositionMarker = updateMarker(destinationPositionMarker,destination,resolvedAddress);
+
                     }
 
                     if (addressTag == startDialogTag) {
