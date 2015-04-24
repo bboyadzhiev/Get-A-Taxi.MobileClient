@@ -22,11 +22,10 @@ public class LocationService extends Service
     public LocationManager locationManager;
     public ClientLocationListener listener;
     public Location previousBestLocation = null;
-    double latitude;
-    double longitude;
+    //double latitude;
+    //double longitude;
 
     Intent intent;
-    int counter = 0;
 
     @Override
     public void onCreate()
@@ -46,8 +45,16 @@ public class LocationService extends Service
         super.onStartCommand(intent, flags, startId);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         listener = new ClientLocationListener();
-       // locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 4000, 0, listener);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 4000, 0, listener);
+//        locationManager.requestLocationUpdates(
+//                LocationManager.NETWORK_PROVIDER,
+//                Constants.LOCATION_UPDATE_INTERVAL,
+//                Constants.LOCATION_UPDATE_DISTANCE,
+//                listener);
+        locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                Constants.LOCATION_UPDATE_INTERVAL,
+                Constants.LOCATION_UPDATE_DISTANCE,
+                listener);
         return Service.START_NOT_STICKY;
     }
 
@@ -138,8 +145,8 @@ public class LocationService extends Service
             if(isBetterLocation(loc, previousBestLocation)) {
 
                 // Getting latitude and longitude
-                latitude = loc.getLatitude();
-                longitude = loc.getLongitude();
+                //latitude = loc.getLatitude();
+                //longitude = loc.getLongitude();
                 //intent.putExtra(Constants.LATITUDE, latitude);
                 //intent.putExtra(Constants.LONGITUDE, longitude);
                 intent.putExtra(Constants.LOCATION, loc);

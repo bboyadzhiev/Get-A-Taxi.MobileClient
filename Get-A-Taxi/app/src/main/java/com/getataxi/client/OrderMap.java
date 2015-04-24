@@ -34,6 +34,7 @@ import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.GeocodeIntentService;
 import com.getataxi.client.utils.LocationService;
+import com.getataxi.client.utils.UserPreferencesManager;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.Projection;
@@ -84,6 +85,8 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private Marker destinationPositionMarker;
     private boolean reportLocationEnabled = true;
 
+    private ArrayList<Location> favLocations;// = new ArrayList<Location>();
+
 
     /**
      * onCreate
@@ -109,6 +112,13 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         confirmLocationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(!reportLocationEnabled){
+                    // Stop location service
+                    Intent stopLocationServiceIntent = new Intent(OrderMap.this, LocationService.class);
+                    context.stopService(stopLocationServiceIntent);
+                }
+
+                // TODO: Send new order
 
             }
         });
@@ -125,7 +135,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                // ChooseLocationDialog(R.id.select_start_location);
                 String startAddress = startAddressEditText.getText().toString();
                 if (!startAddress.isEmpty()) {
-                    initiateAddressGeocode(startDialogTag, startAddress);
+                    initiateGeocode(startAddress, Constants.START_TAG);
                 }
             }
         });
@@ -135,14 +145,16 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             public void onClick(View v) {
                 String destinationAddress = destinationAddressEditText.getText().toString();
                 if(!destinationAddress.isEmpty()){
-                    initiateAddressGeocode(destinationDialogTag, destinationAddress);
+                    initiateGeocode(destinationAddress, Constants.DESTINATION_TAG);
                 }
             }
         });
 
-        locationsInputs = (AddressesInputsFragment)getFragmentManager().findFragmentById(R.id.addressesInputs_fragment);
+        locationsInputs = (AddressesInputsFragment)getFragmentManager()
+                .findFragmentById(R.id.addressesInputs_fragment);
         getFragmentManager().beginTransaction().hide(locationsInputs).commit();
 
+        // Hide addresses inputs
         startGroup = (RelativeLayout) this.findViewById(R.id.startGroup);
         startGroup.setVisibility(View.INVISIBLE);
         destinationGroup = (RelativeLayout)this.findViewById(R.id.destinationGroup);
@@ -190,6 +202,10 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         }
         if (id == R.id.select_start_location) {
             locationDialog= new SelectLocationDialogFragment();
+            Bundle bundle = new Bundle();
+            // TODO: Review and finish in receiver
+            bundle.putParcelableArrayList("LOCATIONS", favLocations);
+            locationDialog.setArguments(bundle);
             startDialogTag = locationDialog.getTag();
             FragmentManager fm = this.getFragmentManager();
             locationDialog.show(fm, startDialogTag);
@@ -265,10 +281,8 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     }
 
 
-    private List<LocationDM> locationDM21s;
     /**
-     * This is where we can add markers or lines, add listeners or move the camera. In this case, we
-     * just add a marker near Africa.
+     * This is where we can add markers or lines, add listeners or move the camera.
      * <p/>
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
@@ -279,7 +293,9 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             @Override
             public void success(List<LocationDM> locationDMs, Response response) {
               //  mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
-                locationDM21s = locationDMs;
+                //Store locations to prefs
+                //favLocations = locationDMs;
+                //UserPreferencesManager.storeLocations(favLocations, context);
                 Log.d("ORDER_MAP", "SUCCESS_GETTING_LOCATIONS");
             }
 
@@ -344,15 +360,20 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                 clientLocation = data.getParcelable(Constants.LOCATION);
 
                 // Reverse geocode for an address
-                initiateLocationReverseGeocode(clientLocation);
+                initiateReverseGeocode(clientLocation, Constants.START_TAG);
 
-                double clientLat = clientLocation.getLatitude(); //data.getDouble(Constants.LATITUDE);
-                double clientLon = clientLocation.getLongitude();//data.getDouble(Constants.LONGITUDE);
+                double clientLat = clientLocation.getLatitude();
+                double clientLon = clientLocation.getLongitude();
 
                 LatLng currentPosition =  new LatLng(clientLat, clientLon);
-                currentPositionMarker = updateMarker(currentPositionMarker, currentPosition, getResources().getString(R.string.marker_current_location_title));
+                currentPositionMarker = updateMarker(
+                        currentPositionMarker,
+                        currentPosition,
+                        getResources().getString(R.string.marker_current_location_title));
 
-                if(reportLocationEnabled){
+                if(!reportLocationEnabled){
+
+                    // TODO: Report location to back
                     // RestClientManager.updateClientLocation(clientLat, clientLon);
                 }
                 confirmLocationButton.setEnabled(true);
@@ -368,8 +389,8 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(location)      // Sets the center of the map to location user
                 .zoom(17)                   // Sets the zoom
-                        //   .bearing(90)                // Sets the orientation of the camera to east
-                        //   .tilt(40)                   // Sets the tilt of the camera to 30 degrees
+                        //   .bearing(90)   // Sets the orientation of the camera to east
+                        //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
                 .build();                   // Creates a CameraPosition from the builder
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
@@ -390,14 +411,15 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     /**
      * Initiates geocode of an address (get the address's location)
      * Uses Geocode Service
-     * @param addressTag Denotes the type of address -
+     * @param address The address to geocode
+     * @param tag Denotes the type of address
      */
-    protected void initiateAddressGeocode(String addressTag, String addressToGeocode) {
+    protected void initiateGeocode(String address, String tag) {
         Intent intent = new Intent(this, GeocodeIntentService.class);
         intent.putExtra(Constants.GEOCODE_RECEIVER, mResultReceiver);
         intent.putExtra(Constants.GEOCODE_TYPE, Constants.GEOCODE);
-        intent.putExtra(Constants.ADDRESS_DATA_EXTRA, addressToGeocode);
-        intent.putExtra(Constants.ADDRESS_TAG, addressTag);
+        intent.putExtra(Constants.ADDRESS_DATA_EXTRA, address);
+        intent.putExtra(Constants.GEOCODE_TAG, tag);
         startService(intent);
     }
 
@@ -406,16 +428,12 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
      * Uses Geocode Service
      * @param location
      */
-    protected void initiateLocationReverseGeocode(Location location) {
+    protected void initiateReverseGeocode(Location location, String tag) {
         Intent intent = new Intent(this, GeocodeIntentService.class);
         intent.putExtra(Constants.GEOCODE_RECEIVER, mResultReceiver);
         intent.putExtra(Constants.GEOCODE_TYPE, Constants.REVERSE_GEOCODE);
-//        Parcel p = Parcel.obtain();
-//        location.writeToParcel(p, 0);
-//        final byte[] b = p.marshall();      //now you've got bytes
-//        p.recycle();
-//        intent.putExtra(Constants.LOCATION_DATA_EXTRA, b);
         intent.putExtra(Constants.LOCATION_DATA_EXTRA, location);
+        intent.putExtra(Constants.GEOCODE_TAG, tag);
         startService(intent);
     }
 
@@ -432,22 +450,24 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             // Display the address string
             // or an error message sent from the intent service.
 
-            String addressTag = resultData.getString(Constants.ADDRESS_TAG);
+            String addressTag = resultData.getString(Constants.GEOCODE_TAG);
             int geocodeType = resultData.getInt(Constants.GEOCODE_TYPE);
             if (resultCode == Constants.SUCCESS_RESULT) {
+                // Location's address was received
                 if(geocodeType == Constants.REVERSE_GEOCODE) {
                     String result = resultData.getString(Constants.ADDRESS_DATA_EXTRA);
-                    if (addressTag == destinationDialogTag) {
+                    if (addressTag == Constants.DESTINATION_TAG) {
                         destinationAddressEditText.setText(result);
                     }
 
-                    if (addressTag == startDialogTag) {
+                    if (addressTag == Constants.START_TAG) {
                         startAddressEditText.setText(result);
                     }
                     // Show a toast message if an address was found.
                     Toast.makeText(context, R.string.address_found, Toast.LENGTH_LONG);
 
                 }else if(geocodeType == Constants.GEOCODE){
+                    // Address's location was received along with additional address data
                     Address address = resultData.getParcelable(Constants.LOCATION_DATA_EXTRA);
 
                     ArrayList<String> addressFragments = new ArrayList<String>();
@@ -456,18 +476,22 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                         addressFragments.add(address.getAddressLine(i));
                     }
 
-                    String resolvedAddress = TextUtils.join(System.getProperty("line.separator"), addressFragments);
+                    String resolvedAddress = TextUtils.join(
+                            System.getProperty("line.separator"), addressFragments);
+                    LatLng location = new LatLng(address.getLatitude(), address.getLongitude());
 
-                    if (addressTag == destinationDialogTag) {
-                        // TODO: update  text edit
-                        LatLng destination = new LatLng(address.getLatitude(), address.getLongitude());
-                        destinationPositionMarker = updateMarker(destinationPositionMarker,destination,resolvedAddress);
-
+                    if (addressTag == Constants.DESTINATION_TAG) {
+                        destinationPositionMarker =
+                                updateMarker(destinationPositionMarker,location,resolvedAddress);
+                        destinationAddressEditText.setText(resolvedAddress);
                     }
 
-                    if (addressTag == startDialogTag) {
-                        // TODO: update start marker
+                    if (addressTag == Constants.START_TAG) {
+                        currentPositionMarker =
+                                updateMarker(currentPositionMarker,location,resolvedAddress);
+                        startAddressEditText.setText(resolvedAddress);
                     }
+
                     // Show a toast message if an address was found.
                     Toast.makeText(context, R.string.location_found, Toast.LENGTH_LONG);
                 }

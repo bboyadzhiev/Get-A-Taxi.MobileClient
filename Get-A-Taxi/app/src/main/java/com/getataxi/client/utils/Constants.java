@@ -11,10 +11,14 @@ public final class Constants {
     public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
            // "com.google.android.gms.location.sample.locationaddress";
 
+    public static final int LOCATION_UPDATE_INTERVAL = 4000; // milliseconds
+    public static final int LOCATION_UPDATE_DISTANCE = 1; // meters
 
-    public static final String ADDRESS_TAG  = PACKAGE_NAME + ".ADDRESS_TAG"; // Tag of the address
 
     // GEOCODE SERVICE
+    public static final String GEOCODE_TAG = PACKAGE_NAME + ".GEOCODE_TAG"; // Tag of the geocode
+    public static final String START_TAG = PACKAGE_NAME + ".START_TAG";
+    public static final String DESTINATION_TAG = PACKAGE_NAME + ".DESTINATION_TAG";
     public static final String GEOCODE_TYPE =  "GEOCODE_TYPE"; // Type of geocode
     public static final int GEOCODE = 0;    // Get the location of an address
     public static final int REVERSE_GEOCODE = 1; // Get the address of a location

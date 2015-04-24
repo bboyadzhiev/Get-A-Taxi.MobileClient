@@ -36,7 +36,7 @@ public class GeocodeIntentService extends IntentService {
     private void deliverAddressToReceiver(int resultCode, String address, String addressTag) {
         Bundle bundle = new Bundle();
         bundle.putString(Constants.ADDRESS_DATA_EXTRA, address);
-        bundle.putString(Constants.ADDRESS_TAG, addressTag);
+        bundle.putString(Constants.GEOCODE_TAG, addressTag);
         mReceiver.send(resultCode, bundle);
     }
 
@@ -45,7 +45,7 @@ public class GeocodeIntentService extends IntentService {
         if ( geocodedAddress != null) {
             bundle.putParcelable(Constants.LOCATION_DATA_EXTRA, geocodedAddress);
         }
-        bundle.putString(Constants.ADDRESS_TAG, addressTag);
+        bundle.putString(Constants.GEOCODE_TAG, addressTag);
         mReceiver.send(resultCode, bundle);
     }
 
@@ -54,9 +54,9 @@ public class GeocodeIntentService extends IntentService {
         String errorMessage = "";
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         int geocodeType = intent.getIntExtra(Constants.GEOCODE_TYPE, Constants.GEOCODE);
-        String addressTag = intent.getStringExtra(Constants.ADDRESS_TAG);
+        String tag = intent.getStringExtra(Constants.GEOCODE_TAG);
         if(geocodeType ==  Constants.GEOCODE) {
-            String addressToGeocode = intent.getStringExtra(Constants.LOCATION_DATA_EXTRA);
+            String addressToGeocode = intent.getStringExtra(Constants.ADDRESS_DATA_EXTRA);
             List<Address> addresses = null;
             try {
                 addresses = geocoder.getFromLocationName(addressToGeocode, 1);
@@ -66,14 +66,14 @@ public class GeocodeIntentService extends IntentService {
             } catch (IllegalArgumentException illegalArgumentException) {
                 // Catch invalid latitude or longitude values.
                 errorMessage = getString(R.string.invalid_address_used);
-                Log.e(TAG, errorMessage + ". " + "Address: " + addressToGeocode, illegalArgumentException);
+                Log.e(TAG, errorMessage + ": " + addressToGeocode, illegalArgumentException);
             }
 
             if(addresses != null && addresses.size() > 0) {
                 Address geocodedAddress = addresses.get(0);
-                deliverLocationToReceiver(Constants.SUCCESS_RESULT, geocodedAddress, addressTag);
+                deliverLocationToReceiver(Constants.SUCCESS_RESULT, geocodedAddress, tag);
             } else {
-                deliverLocationToReceiver(Constants.FAILURE_RESULT, null, addressTag);
+                deliverLocationToReceiver(Constants.FAILURE_RESULT, null, tag);
             }
 
         } else if(geocodeType ==  Constants.REVERSE_GEOCODE) {
@@ -103,7 +103,7 @@ public class GeocodeIntentService extends IntentService {
                     errorMessage = getString(R.string.address_not_found);
                     Log.e(TAG, errorMessage);
                 }
-                deliverAddressToReceiver(Constants.FAILURE_RESULT, errorMessage, addressTag);
+                deliverAddressToReceiver(Constants.FAILURE_RESULT, errorMessage, tag);
             } else {
                 Address address = addresses.get(0);
                 ArrayList<String> addressFragments = new ArrayList<String>();
@@ -117,7 +117,7 @@ public class GeocodeIntentService extends IntentService {
                 deliverAddressToReceiver(
                         Constants.SUCCESS_RESULT,
                         TextUtils.join(System.getProperty("line.separator"),addressFragments),
-                        addressTag);
+                        tag);
             }
         }
     }
