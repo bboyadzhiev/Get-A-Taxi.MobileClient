@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_activity_register">RegisterActivity</string>
+
+    <string name="names_text">Enter your names</string>
+    <string name="firstName">First name</string>
+    <string name="middleName">Middle name</string>
+    <string name="lastName">Last name</string>
+
+    <string name="email">Email</string>
+    <string name="email_text">Enter your e-mail</string>
+
+
+    <string name="password_text">Enter your password</string>
+    <string name="confirm_password">Confirm password</string>
+
+    <string name="register">Register</string>
+    <string name="creating_account_msg">Creating account...</string>
+    <string name="successfully_registered_msg">"Successfully registered"</string>
+</resources>

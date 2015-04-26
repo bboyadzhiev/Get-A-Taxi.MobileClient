@@ -10,7 +10,6 @@
  The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
          Google Maps Android API v2, but are recommended.
     -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <!-- To auto-complete the email text field in the login form with the user's emails -->
@@ -58,10 +57,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".utils.LocationService"/>
+        <service
+            android:name=".utils.LocationService"
+            android:exported="false"
+            />
         <service
             android:name=".utils.GeocodeIntentService"
-            android:exported="false"/>
+            android:exported="false"
+            />
     </application>
 
 </manifest>

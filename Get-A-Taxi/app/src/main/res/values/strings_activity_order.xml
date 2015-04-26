@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_activity_order_map">Order Map</string>
+    <string name="confirm_location_txt">Confirm and order!</string>
+    <string name="no_user_locations_toast">No stored locations found!</string>
+</resources>

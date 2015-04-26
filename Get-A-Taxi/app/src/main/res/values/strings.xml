@@ -4,51 +4,10 @@
     <string name="app_name">Get-A-Taxi Client</string>
     <string name="action_settings">Settings</string>
 
-
-
-    <string name="title_activity_startup">Get-A-Taxi</string>
-    <string name="network_disconnected_title">Network error</string>
-    <string name="network_disconnected_message">Internet connection not available, go to settings?</string>
-    <string name="positioning_unavailable_title">Positioning services unavailable!</string>
-    <string name="positioning_unavailable_message">Change settings?</string>
-
-    <string name="title_activity_order_map">Order Map</string>
-
-    <string name="title_activity_register">RegisterActivity</string>
-
-    <string name="names_text">Enter your names</string>
-    <string name="firstName">First name</string>
-    <string name="middleName">Middle name</string>
-    <string name="lastName">Last name</string>
-
-    <string name="email">Email</string>
-    <string name="email_text">Enter your e-mail</string>
-
-
-    <string name="password_text">Enter your password</string>
-    <string name="confirm_password">Confirm password</string>
-
-    <string name="hello_world">Hello world!</string>
-
-
     <string name="password">Password</string>
-
-
-    <string name="login">Login</string>
-    <string name="register">Register</string>
-
-    <string name="or_register"><u>Or Register</u></string>
-    <string name="or_login"><u>No, log me in</u></string>
 
     <string name="exit">Exit</string>
 
     <string name="login_success_message">Welcome, %1$s!</string>
-
-    <string name="confirm_location_txt">Confirm location</string>
-
-    <string name="location_updated_action">com.getataxi.client.location.UPDATED</string>
-    
-<!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

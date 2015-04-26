@@ -8,6 +8,7 @@ import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
+import com.getataxi.client.models.Location;
 import com.getataxi.client.utils.UserPreferencesManager;
 
 import org.apache.http.HttpStatus;
@@ -277,8 +278,8 @@ if (error.getResponse().getStatus() == 401){
 
     }
 
-    public static void updateClientLocation(double lat, double lon){
-
+    public static void updateClientLocation(final LocationDM locaton, Context context, Callback callback){
+        client.getLocationsService(getAuthorisationHeaders(context)).updateLocation(locaton, callback);
 
     }
 

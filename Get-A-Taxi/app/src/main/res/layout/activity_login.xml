@@ -45,7 +45,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/password"
                 android:imeActionId="@+id/login"
-                android:imeActionLabel="@string/action_sign_in_short"
+                android:imeActionLabel="@string/action_log_in_short"
                 android:imeOptions="actionUnspecified"
                 android:inputType="textPassword"
                 android:maxLines="1"
@@ -53,7 +53,7 @@
 
             <Button android:id="@+id/email_sign_in_button" style="?android:textAppearanceSmall"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" android:text="@string/action_sign_in_short"
+                android:layout_marginTop="16dp" android:text="@string/action_log_in_short"
                 android:textStyle="bold" />
 
             <Button android:id="@+id/goto_register_button"

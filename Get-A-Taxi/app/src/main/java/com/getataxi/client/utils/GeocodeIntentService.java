@@ -21,40 +21,50 @@ import java.util.Locale;
  * Created by bvb on 21.4.2015 г..
  */
 public class GeocodeIntentService extends IntentService {
-    private static final String TAG = "GEOCODE";
+    private static final String TAG = "GEOCODE_SERVICE";
     protected ResultReceiver mReceiver;
 
-    /**
-     * Creates an IntentService.  Invoked by your subclass's constructor.
-     *
-     * @param name Used to name the worker thread, important only for debugging.
-     */
-    public GeocodeIntentService(String name) {
-        super(name);
+    public GeocodeIntentService() {
+        super("GeocodeIntentService");
     }
-
-    private void deliverAddressToReceiver(int resultCode, String address, String addressTag) {
+    private void deliverAddressToReceiver(int resultCode, String address, int addressTag) {
         Bundle bundle = new Bundle();
+        //ADD GEOCODE TYPE
+        bundle.putInt(Constants.GEOCODE_TYPE, Constants.REVERSE_GEOCODE);
         bundle.putString(Constants.ADDRESS_DATA_EXTRA, address);
-        bundle.putString(Constants.GEOCODE_TAG, addressTag);
+        bundle.putInt(Constants.GEOCODE_TAG, addressTag);
+        Log.d(TAG, "SUCCESS_REVERSE_GEOCODE");
+        Log.d("RESULT_CODE", "" + resultCode );
+        Log.d("ADDRESS_DATA_EXTRA", address);
+        Log.d("GEOCODE_TAG", " " + addressTag);
         mReceiver.send(resultCode, bundle);
     }
 
-    private void deliverLocationToReceiver(int resultCode, Address geocodedAddress, String addressTag) {
-        Bundle bundle = new Bundle();
+    private void deliverLocationToReceiver(int resultCode, Address geocodedAddress, int addressTag) {
+
         if ( geocodedAddress != null) {
+            Bundle bundle = new Bundle();
+            bundle.putInt(Constants.GEOCODE_TYPE, Constants.GEOCODE);
             bundle.putParcelable(Constants.LOCATION_DATA_EXTRA, geocodedAddress);
+            bundle.putInt(Constants.GEOCODE_TAG, addressTag);
+            mReceiver.send(resultCode, bundle);
         }
-        bundle.putString(Constants.GEOCODE_TAG, addressTag);
-        mReceiver.send(resultCode, bundle);
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        mReceiver = intent.getParcelableExtra(Constants.GEOCODE_RECEIVER);
+
+        // Check if receiver was properly registered.
+        if (mReceiver == null) {
+            Log.wtf(TAG, "No receiver received. There is nowhere to send the results.");
+            return;
+        }
+
         String errorMessage = "";
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-        int geocodeType = intent.getIntExtra(Constants.GEOCODE_TYPE, Constants.GEOCODE);
-        String tag = intent.getStringExtra(Constants.GEOCODE_TAG);
+        int geocodeType = intent.getIntExtra(Constants.GEOCODE_TYPE, Constants.REVERSE_GEOCODE);
+        int tag = intent.getIntExtra(Constants.GEOCODE_TAG, Constants.START_TAG);
         if(geocodeType ==  Constants.GEOCODE) {
             String addressToGeocode = intent.getStringExtra(Constants.ADDRESS_DATA_EXTRA);
             List<Address> addresses = null;

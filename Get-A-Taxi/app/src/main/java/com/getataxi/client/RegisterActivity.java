@@ -112,7 +112,7 @@ public class RegisterActivity extends ActionBarActivity{
                     int status  = response.getStatus();
                     if (status == HttpStatus.SC_OK){
                         try {
-                            Toast.makeText(context, "Successfully registered", Toast.LENGTH_LONG).show();
+                            Toast.makeText(context, R.string.successfully_registered_msg, Toast.LENGTH_LONG).show();
                             UserPreferencesManager.saveUserData(registerModel, context);
                             Intent login = new Intent(context, LoginActivity.class);
                             context.startActivity(login);
@@ -163,16 +163,15 @@ public class RegisterActivity extends ActionBarActivity{
         protected void onPreExecute() {
             super.onPreExecute();
             dialog = new ProgressDialog(getApplicationContext());
-            dialog.setMessage("Creating account...");
+            dialog.setMessage(getString(R.string.creating_account_msg));
             dialog.show();
         }
-
-
     }
 
     public RegisterUserDM getRegistrationModel(){
         RegisterUserDM registerUserDM = new RegisterUserDM();
 
+        registerUserDM.userName = this.emailEditText.getText().toString();
         registerUserDM.firstName = this.firstNameEditText.getText().toString();
         registerUserDM.middleName = this.middleNameEditText.getText().toString();
         registerUserDM.lastName = this.lastNameEditText.getText().toString();

@@ -20,11 +20,10 @@
             android:layout_alignBottom="@+id/startAddress_btn"
             android:text="@string/enter_current_address"
             android:layout_alignParentTop="true" />
-        <Button
+        <ImageButton
             android:id="@+id/startAddress_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/stored_location_btn_txt"
             android:layout_alignParentRight="true"
             />
     </RelativeLayout>
@@ -45,11 +44,10 @@
             android:layout_alignBottom="@+id/destinationAddress_btn" />
 
 
-        <Button
+        <ImageButton
             android:id="@+id/destinationAddress_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/stored_location_btn_txt"
             android:layout_alignParentRight="true"
             />
     </RelativeLayout>
