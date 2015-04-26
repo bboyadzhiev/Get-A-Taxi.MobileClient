@@ -11,8 +11,8 @@ public final class Constants {
     public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
            // "com.google.android.gms.location.sample.locationaddress";
 
-    public static final int LOCATION_UPDATE_INTERVAL = 4000; // milliseconds
-    public static final int LOCATION_UPDATE_DISTANCE = 5; // meters
+    public static final int LOCATION_UPDATE_INTERVAL = 10000; // milliseconds
+    public static final int LOCATION_UPDATE_DISTANCE = 100; // meters
 
 
     // GEOCODE SERVICE

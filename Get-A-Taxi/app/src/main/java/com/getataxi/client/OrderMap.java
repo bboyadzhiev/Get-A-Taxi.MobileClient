@@ -122,7 +122,19 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                     currentReverseGeocodedLocation.longitude = clientLon;
                     markerTitle = currentReverseGeocodedLocation.title;
                     if(updateLocationEnabled){
-                        RestClientManager.updateClientLocation(currentReverseGeocodedLocation, context, null);
+                        RestClientManager.updateClientLocation(currentReverseGeocodedLocation, context,  new Callback<LocationDM>() {
+                            @Override
+                            public void success(LocationDM locationDM, Response response) {
+                                // Store locations to prefs
+                                LocationDM updatedLocation = locationDM;
+                                Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
+                            }
+
+                            @Override
+                            public void failure(RetrofitError error) {
+                                Log.d(TAG, "ERROR_UPDATING_LOCATION");
+                            }
+                        });
                     }
                 } else {
                     markerTitle =  getResources().getString(R.string.looking_up_location);
@@ -133,8 +145,6 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                         latLng,
                         markerTitle
                 );
-
-
 
                 placeOrderButton.setEnabled(true);
 
@@ -535,7 +545,8 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                         startAddressEditText.setText(resultAddress);
                         startAddressButton.setImageDrawable(addToLocationsDrawable);
                         destinationGroup.setVisibility(View.VISIBLE);
-
+                        destinationAddressEditText.setVisibility(View.VISIBLE);
+                        destinationAddressButton.setVisibility(View.VISIBLE);
                         //Update marker
                         LatLng latLng = currentLocationMarker.getPosition();
                         updateMarker(currentLocationMarker, latLng,resultAddress);
@@ -543,16 +554,30 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                         //Update model
                         if(currentReverseGeocodedLocation == null){
                             currentReverseGeocodedLocation = new LocationDM();
-                        }
-                        currentReverseGeocodedLocation.latitude = latLng.latitude;
-                        currentReverseGeocodedLocation.longitude = latLng.longitude;
-                        currentReverseGeocodedLocation.address = resultAddress;
+                            currentReverseGeocodedLocation.latitude = latLng.latitude;
+                            currentReverseGeocodedLocation.longitude = latLng.longitude;
+                            currentReverseGeocodedLocation.address = resultAddress;
+                            String addressLines[] = resultAddress.split("\\r?\\n");
+                            currentReverseGeocodedLocation.title = addressLines[0];
 
-                        // Enable ordering input
-                        placeOrderButton.setEnabled(true);
+                            // Enable ordering input
+                            placeOrderButton.setEnabled(true);
 
-                        if(updateLocationEnabled){
-                            RestClientManager.updateClientLocation(currentReverseGeocodedLocation, context, null);
+                            // Resolve address only once
+                            RestClientManager.updateClientLocation(currentReverseGeocodedLocation, context, new Callback<LocationDM>() {
+                                @Override
+                                public void success(LocationDM locationDM, Response response) {
+                                    // Store locations to prefs
+                                    LocationDM updatedLocation = locationDM;
+
+                                    Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
+                                }
+
+                                @Override
+                                public void failure(RetrofitError error) {
+                                    Log.d(TAG, "ERROR_UPDATING_LOCATION");
+                                }
+                            });
                         }
                     }
                     // Show a toast message if an address was found.

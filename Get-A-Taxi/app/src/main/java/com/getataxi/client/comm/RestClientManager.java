@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.getataxi.client.comm.contracts.LocationsAPI;
 import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.comm.models.ClientOrderDM;
@@ -39,9 +40,10 @@ public class RestClientManager {
 
     private static List<NameValuePair> getAuthorisationHeaders(Context context){
         LoginUserDM loginData = UserPreferencesManager.getLoginData(context);
-        if (headers.isEmpty()){
+        headers.clear();
+       // if (headers.isEmpty()){
             headers.add(new BasicNameValuePair("Authorization", "Bearer " + loginData.accessToken));
-        }
+        //}
         if (UserPreferencesManager.tokenHasExpired(loginData)){
             updateToken(loginData, "password", context);
         }
@@ -254,11 +256,20 @@ if (error.getResponse().getStatus() == 401){
 
     // Locations
     public static void getLocations(Context context, Callback<List<LocationDM>> callback){
-        client.getLocationsService(getAuthorisationHeaders(context)).getLocations(callback);
+        //client.getLocationsService(getAuthorisationHeaders(context)).getLocations(callback);
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        client.getLocationsService(heads).getLocations(callback);
     }
 
     public static void getLocation(int locationId, Context context, Callback<LocationDM> callback){
         client.getLocationsService(getAuthorisationHeaders(context)).deleteLocation(locationId, callback);
+    }
+
+    public static void updateClientLocation(final LocationDM locationDM, Context context, Callback callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        //client.headers = heads;
+        LocationsAPI asd = client.getLocationsService(heads);
+        asd.updateLocation(locationDM, callback);
     }
 
     public static void addLocation(final LocationDM locationDM, Context context, Callback<LocationDM> callback){
@@ -278,9 +289,6 @@ if (error.getResponse().getStatus() == 401){
 
     }
 
-    public static void updateClientLocation(final LocationDM locaton, Context context, Callback callback){
-        client.getLocationsService(getAuthorisationHeaders(context)).updateLocation(locaton, callback);
 
-    }
 
 }

@@ -143,7 +143,7 @@ public class UserPreferencesManager {
     public static LoginUserDM getLoginData(Context context){
         SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         String userData = userPref.getString("LoginData", "");
-        Log.d("USER_DATA", userData);
+       // Log.d("USER_DATA", userData);
         Gson gson = new Gson();
         LoginUserDM userInfo = gson.fromJson(userData, LoginUserDM.class);
         return userInfo;

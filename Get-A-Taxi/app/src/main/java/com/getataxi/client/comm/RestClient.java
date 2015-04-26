@@ -62,6 +62,7 @@ public class RestClient{
 
     public AccountAPI getAccountService(List<NameValuePair> headers){
         this.headers.clear();
+
         if (headers != null) {
             this.headers = headers;
         }
@@ -76,10 +77,10 @@ public class RestClient{
         return ordersService;
     }
 
-    public LocationsAPI getLocationsService(List<NameValuePair> headers){
-        this.headers.clear();
-        if (headers != null) {
-            this.headers = headers;
+    public LocationsAPI getLocationsService(List<NameValuePair> headersPassed){
+      //  this.headers.clear();
+        if (headersPassed != null || !headersPassed.isEmpty()) {
+            this.headers = headersPassed;
         }
         return locationsService;
     }

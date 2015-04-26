@@ -45,11 +45,11 @@ public class LocationService extends Service
         super.onStartCommand(intent, flags, startId);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         listener = new ClientLocationListener();
-//        locationManager.requestLocationUpdates(
-//                LocationManager.NETWORK_PROVIDER,
-//                Constants.LOCATION_UPDATE_INTERVAL,
-//                Constants.LOCATION_UPDATE_DISTANCE,
-//                listener);
+        locationManager.requestLocationUpdates(
+                LocationManager.NETWORK_PROVIDER,
+                Constants.LOCATION_UPDATE_INTERVAL,
+                Constants.LOCATION_UPDATE_DISTANCE,
+                listener);
         locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
                 Constants.LOCATION_UPDATE_INTERVAL,
