@@ -16,6 +16,7 @@ import android.os.Parcelable;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -63,6 +64,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private String startDialogTag;
 
     private Context context;
+    private  String phoneNumber;
 
     private Button placeOrderButton;
     // Addresses inputs
@@ -121,21 +123,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                     currentReverseGeocodedLocation.latitude = clientLat;
                     currentReverseGeocodedLocation.longitude = clientLon;
                     markerTitle = currentReverseGeocodedLocation.title;
-                    if(updateLocationEnabled){
-                        RestClientManager.updateClientLocation(currentReverseGeocodedLocation, context,  new Callback<LocationDM>() {
-                            @Override
-                            public void success(LocationDM locationDM, Response response) {
-                                // Store locations to prefs
-                                LocationDM updatedLocation = locationDM;
-                                Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
-                            }
 
-                            @Override
-                            public void failure(RetrofitError error) {
-                                Log.d(TAG, "ERROR_UPDATING_LOCATION");
-                            }
-                        });
-                    }
                 } else {
                     markerTitle =  getResources().getString(R.string.looking_up_location);
                 }
@@ -162,6 +150,8 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order_map);
         context = this;
+        TelephonyManager tMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
+        phoneNumber = tMgr.getLine1Number();
         initInputs();
 
         setUpMapIfNeeded();
@@ -180,6 +170,8 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
         // Start location service
         Intent locationService = new Intent(OrderMap.this, LocationService.class);
+        locationService.putExtra(Constants.LOCATION_REPORT_ENABLED, updateLocationEnabled);
+        locationService.putExtra(Constants.LOCATION_REPORT_TITLE, phoneNumber);
         context.startService(locationService);
 
         // Register for Location Service broadcasts
@@ -472,6 +464,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             marker.setTitle(title);
             animateMarker(marker, location, false);
         }
+        marker.showInfoWindow();
         return marker;
     }
 
@@ -547,6 +540,12 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                         destinationGroup.setVisibility(View.VISIBLE);
                         destinationAddressEditText.setVisibility(View.VISIBLE);
                         destinationAddressButton.setVisibility(View.VISIBLE);
+                        FragmentManager fm = getFragmentManager();
+                        fm.beginTransaction()
+                                .setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out)
+                                .show(locationsInputs)
+                                .commit();
+
                         //Update marker
                         LatLng latLng = currentLocationMarker.getPosition();
                         updateMarker(currentLocationMarker, latLng,resultAddress);

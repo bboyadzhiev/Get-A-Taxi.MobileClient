@@ -1,7 +1,5 @@
 package com.getataxi.client.utils;
 
-import android.content.Context;
-
 /**
  * Created by bvb on 21.4.2015 г..
  */
@@ -9,10 +7,8 @@ public final class Constants {
 
 
     public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
-           // "com.google.android.gms.location.sample.locationaddress";
 
-    public static final int LOCATION_UPDATE_INTERVAL = 10000; // milliseconds
-    public static final int LOCATION_UPDATE_DISTANCE = 100; // meters
+
 
 
     // GEOCODE SERVICE
@@ -36,8 +32,13 @@ public final class Constants {
     //LOCATION SERVICE
     public static final String LOCATION_UPDATED = PACKAGE_NAME + "LOCATION_UPDATED";
     public static final String LOCATION = PACKAGE_NAME + ".LOCATION";
-    //public static final String LATITUDE = PACKAGE_NAME + ".LATITUDE";
-    //public static final String LONGITUDE = PACKAGE_NAME + ".LONGITUDE";
+
+    public static final String LOCATION_REPORT_ENABLED = PACKAGE_NAME + ".LOCATION_REPORT_ENABLED";
+    public static final String LOCATION_REPORT_TITLE = PACKAGE_NAME + ".LOCATION_REPORT_TITLE";
+
+    public static final int LOCATION_UPDATE_INTERVAL = 10000; // milliseconds
+    public static final int LOCATION_UPDATE_DISTANCE = 1; // meters
+
     public static final int LOCATION_TIMEOUT = 1000 * 60 * 5; // five minutes;
 
 

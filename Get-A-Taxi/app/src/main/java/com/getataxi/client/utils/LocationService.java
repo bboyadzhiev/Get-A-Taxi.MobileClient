@@ -12,26 +12,33 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.getataxi.client.comm.RestClientManager;
+import com.getataxi.client.comm.models.LocationDM;
+
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * Created by bvb on 5.4.2015 г..
  */
 public class LocationService extends Service
 {
-
+    public  final String TAG = "utils.LocationService";
     public LocationManager locationManager;
     public ClientLocationListener listener;
     public Location previousBestLocation = null;
+    private boolean reportLocationEnabled = false;
+    private String reportLocationTitle;
     //double latitude;
     //double longitude;
 
-    Intent intent;
+    Intent broadcastIntent;
 
     @Override
     public void onCreate()
     {
         super.onCreate();
-        intent = new Intent(Constants.LOCATION_UPDATED);
+        broadcastIntent = new Intent(Constants.LOCATION_UPDATED);
     }
 
     @Override
@@ -43,13 +50,18 @@ public class LocationService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
+
+        Bundle b = intent.getExtras();
+        reportLocationEnabled = b.getBoolean(Constants.LOCATION_REPORT_ENABLED, false);
+        reportLocationTitle = b.getString(Constants.LOCATION_REPORT_TITLE, "Unknown");
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         listener = new ClientLocationListener();
-        locationManager.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER,
-                Constants.LOCATION_UPDATE_INTERVAL,
-                Constants.LOCATION_UPDATE_DISTANCE,
-                listener);
+//        locationManager.requestLocationUpdates(
+//                LocationManager.NETWORK_PROVIDER,
+//                Constants.LOCATION_UPDATE_INTERVAL,
+//                Constants.LOCATION_UPDATE_DISTANCE,
+//                listener);
         locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
                 Constants.LOCATION_UPDATE_INTERVAL,
@@ -144,15 +156,28 @@ public class LocationService extends Service
         {
             if(isBetterLocation(loc, previousBestLocation)) {
 
-                // Getting latitude and longitude
-                //latitude = loc.getLatitude();
-                //longitude = loc.getLongitude();
-                //intent.putExtra(Constants.LATITUDE, latitude);
-                //intent.putExtra(Constants.LONGITUDE, longitude);
-                intent.putExtra(Constants.LOCATION, loc);
+                broadcastIntent.putExtra(Constants.LOCATION, loc);
 
                 // Notify all interested parties
-                sendBroadcast(intent);
+                sendBroadcast(broadcastIntent);
+                if(reportLocationEnabled){
+                    LocationDM locationDM = new LocationDM();
+                    locationDM.latitude = loc.getLatitude();
+                    locationDM.longitude = loc.getLongitude();
+                    locationDM.title = reportLocationTitle;
+                    RestClientManager.updateClientLocation(locationDM, getApplicationContext(),  new Callback<LocationDM>() {
+                        @Override
+                        public void success(LocationDM locationDM, Response response) {
+                            Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
+                        }
+
+                        @Override
+                        public void failure(RetrofitError error) {
+                            Log.d(TAG, "ERROR_UPDATING_LOCATION");
+                        }
+                    });
+
+                }
             }
         }
 
