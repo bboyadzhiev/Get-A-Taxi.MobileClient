@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -19,6 +20,7 @@ import com.getataxi.client.utils.LocationService;
 import com.getataxi.client.utils.UserPreferencesManager;
 
 import org.apache.http.HttpStatus;
+import org.parceler.transfuse.annotations.Resource;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -46,7 +48,7 @@ public class StartupActivity extends Activity {
             DeviceState.showSettingsAlert(
                     R.string.network_disconnected_title,
                     R.string.network_disconnected_message,
-                    Settings.ACTION_NETWORK_OPERATOR_SETTINGS,
+                    Settings.ACTION_WIRELESS_SETTINGS,
                     context
             );
         }
@@ -76,16 +78,12 @@ public class StartupActivity extends Activity {
     }
 
     private void proceedWithStartup() {
-//        // Starting location service
-//        Intent intent = new Intent(StartupActivity.this, LocationService.class);
-//        startService(intent);
 
         try {
             Log.e("DATE: ", UserPreferencesManager.tokenDateFormat.parse("Thu, 09 Apr 2015 20:48:26 GMT").toString());
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
 
         // Check for login credentials
         if(UserPreferencesManager.checkForLoginCredentials(context)){
@@ -107,7 +105,8 @@ public class StartupActivity extends Activity {
                         int status = response.getStatus();
                         if (status == HttpStatus.SC_OK) {
                             try {
-                                Toast.makeText(context, "Automatic login as " + loginUserDM.email, Toast.LENGTH_LONG).show();
+                                String s = getResources().getString(R.string.token_renew);
+                                Toast.makeText(context, String.format(s, loginUserDM.email), Toast.LENGTH_LONG).show();
                                 UserPreferencesManager.saveLoginData(loginUserDM, context);
 
                                 Intent orderMap = new Intent(context, OrderMap.class);
@@ -130,17 +129,22 @@ public class StartupActivity extends Activity {
                 });
 
             }
-        } else // No login credentials, check for stored registration
-        if (UserPreferencesManager.checkForRegistration(context)){
-            // Suggest login
-            Intent loginIntent = new Intent(context, LoginActivity.class);
-            loginIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(loginIntent);
-        } else {// No stored credentials at all, suggesting new registration
-            Toast.makeText(context, "Please register!", Toast.LENGTH_LONG).show();
-            Intent registerIntent = new Intent(context, RegisterActivity.class);
-            registerIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(registerIntent);
+        } else  {
+            // No login credentials, check for stored registration
+            Resources res = getResources();
+            if (UserPreferencesManager.checkForRegistration(context)){
+                // Stored credentials found, suggest login
+                Toast.makeText(context, res.getString(R.string.please_login), Toast.LENGTH_LONG).show();
+                Intent loginIntent = new Intent(context, LoginActivity.class);
+                loginIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(loginIntent);
+            } else {
+                // No stored credentials at all, suggesting new registration
+                Toast.makeText(context, res.getString(R.string.please_register), Toast.LENGTH_LONG).show();
+                Intent registerIntent = new Intent(context, RegisterActivity.class);
+                registerIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(registerIntent);
+            }
         }
     }
 

@@ -17,4 +17,11 @@
     <string name="register">Register</string>
     <string name="creating_account_msg">Creating account...</string>
     <string name="successfully_registered_msg">"Successfully registered"</string>
+
+    //Errors
+    <string name="first_name_required">First name is required</string>
+    <string name="last_name_required">Last name is required</string>
+    <string name="invalid_email">Invalid e-mail!</string>
+    <string name="email_required">E-mails is required</string>
+    <string name="password_short">Password should be more than %d symbols!</string>
 </resources>

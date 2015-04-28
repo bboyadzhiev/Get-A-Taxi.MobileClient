@@ -215,7 +215,7 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
                             Toast.makeText(context, welcome, Toast.LENGTH_LONG).show();
                             Thread.sleep(5000);
                             UserPreferencesManager.saveLoginData(responseLoginUserDM, context);
-
+                            showProgress(false);
                             Toast.makeText(context, "Login data stored!", Toast.LENGTH_LONG).show();
                             Intent orderMap = new Intent(context, OrderMap.class);
                             orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -234,6 +234,7 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
                 @Override
                 public void failure(RetrofitError error) {
                     // TODO: Fix error message
+                    showProgress(false);
                     Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
 //                    String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
 //                    Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();

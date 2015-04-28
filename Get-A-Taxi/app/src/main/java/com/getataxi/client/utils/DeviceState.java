@@ -4,12 +4,14 @@ package com.getataxi.client.utils;
  * Created by bvb on 28.3.2015 г..
  */
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.provider.Settings;
 
 public class DeviceState {
 
@@ -62,8 +64,16 @@ public class DeviceState {
         alertDialog.setPositiveButton("Ok",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(intentString);
-                        context.startActivity(intent);
+                        if(intentString.compareTo(Settings.ACTION_WIRELESS_SETTINGS) == 0){
+                            //
+                            //ComponentName cName = new ComponentName("com.android.phone","com.android.phone.Settings");
+                            //intent.setComponent(cName);
+                            Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+                            context.startActivity(intent);
+                        } else {
+                            Intent intent = new Intent(intentString);
+                            context.startActivity(intent);
+                        }
                     }
                 });
 

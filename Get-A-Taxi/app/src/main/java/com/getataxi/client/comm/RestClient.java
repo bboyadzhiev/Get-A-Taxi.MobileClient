@@ -4,16 +4,20 @@ import com.getataxi.client.comm.contracts.AccountAPI;
 import com.getataxi.client.comm.contracts.ClientOrdersAPI;
 import com.getataxi.client.comm.contracts.LocationsAPI;
 
+import com.getataxi.client.utils.Constants;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.squareup.okhttp.OkHttpClient;
 
 import org.apache.http.NameValuePair;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
+import retrofit.client.OkClient;
 import retrofit.converter.GsonConverter;
 
 /**
@@ -48,10 +52,19 @@ public class RestClient{
             }
         };
 
+//        final OkHttpClient okHttpClient = new OkHttpClient();
+//        okHttpClient.setReadTimeout(Constants.READ_TIMEOUT, TimeUnit.MILLISECONDS);
+//        okHttpClient.setWriteTimeout(Constants.WRITE_TIMEOUT, TimeUnit.SECONDS);
+//        okHttpClient.setConnectTimeout(Constants.CONNECT_TIMEOUT, TimeUnit.MILLISECONDS);
+        final RetrofitHttpClient client = new RetrofitHttpClient();
+
+
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setLogLevel(RestAdapter.LogLevel.FULL)
                 .setEndpoint(this.baseUrl)
                 .setConverter(new GsonConverter(gson))
+                //.setClient(new OkClient(okHttpClient))
+                .setClient(client)
                 .setRequestInterceptor(requestInterceptor)
                 .build();
 

@@ -8,7 +8,8 @@ public final class Constants {
 
     public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
 
-
+    public static final int PASSWORD_MIN_LENGTH = 4;
+    public static final int EMAIL_MIN_LENGTH = 4;
 
 
     // GEOCODE SERVICE
@@ -43,6 +44,11 @@ public final class Constants {
 
 
     public static final String USER_LOCATIONS =  PACKAGE_NAME + ".USER_LOCATIONS";
+
+    // Connection timeouts in milliseconds
+    public static final int READ_TIMEOUT = 15000;
+    public static final int CONNECT_TIMEOUT = 15000;
+    public static final int WRITE_TIMEOUT = 5000;
 
     // DEBUGGING STRINGS
 
