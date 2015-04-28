@@ -22,5 +22,5 @@ public interface AccountAPI {
      void login(@Field("username") String userName,@Field("password") String password, @Field("grant_type") String grantType, Callback<LoginUserDM> callback);
 
     @POST("/api/Account/Register")
-     void register(@Body RegisterUserDM userInfo, Callback<LoginUserDM> callback);
+     void register(@Body RegisterUserDM userInfo, Callback<String> callback);
 }

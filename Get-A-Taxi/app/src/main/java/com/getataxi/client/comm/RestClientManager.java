@@ -180,8 +180,8 @@ if (error.getResponse().getStatus() == 401){
         client.getAccountService(null).login(loginUserDM.email, loginUserDM.password, grantType,callback);
     }
 
-    public static void register(final RegisterUserDM userDM, Callback<LoginUserDM> callback){
-        client.getAccountService(null).register(userDM, callback);
+    public static void register(final RegisterUserDM registerUserDM, Callback callback){
+        client.getAccountService(null).register(registerUserDM, callback);
     }
 
 //    public static void login(LoginUserDM loginUserDM, String grantType, final Context context){

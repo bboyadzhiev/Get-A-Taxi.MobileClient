@@ -106,9 +106,9 @@ public class RegisterActivity extends ActionBarActivity{
             model.phoneNumber = tMgr.getLine1Number();
             final RegisterUserDM registerModel = model;
 
-            RestClientManager.register(model,  new Callback<LoginUserDM>() {
+            RestClientManager.register(model,  new Callback<String>() {
                 @Override
-                public void success(LoginUserDM loginUserDM, Response response) {
+                public void success(String s, Response response) {
                     int status  = response.getStatus();
                     if (status == HttpStatus.SC_OK){
                         try {
