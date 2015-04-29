@@ -10,6 +10,7 @@ import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
 import com.getataxi.client.models.Location;
+import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.UserPreferencesManager;
 
 import org.apache.http.HttpStatus;
@@ -31,8 +32,8 @@ import retrofit.mime.TypedByteArray;
  */
 public class RestClientManager {
     private static final String User_Info_File = "GetATaxiClient";
-    private static final String BASE_URL = "http://get-a-taxi.apphb.com";
-    private static RestClient client = new RestClient(BASE_URL);
+
+    private static RestClient client = new RestClient(Constants.BASE_URL);
     private static List<NameValuePair> headers = new ArrayList<NameValuePair>();
 
     public RestClientManager(){

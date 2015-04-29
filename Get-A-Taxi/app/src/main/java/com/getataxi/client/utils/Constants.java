@@ -5,7 +5,8 @@ package com.getataxi.client.utils;
  */
 public final class Constants {
 
-
+    public static final String BASE_URL = "http://get-a-taxi.apphb.com";
+    public static final String HUB = "/signalr";
     public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
 
     public static final int PASSWORD_MIN_LENGTH = 4;
