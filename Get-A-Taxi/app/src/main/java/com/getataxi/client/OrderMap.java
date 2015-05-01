@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Location;
@@ -42,6 +43,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -133,6 +135,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                         latLng,
                         markerTitle
                 );
+                currentLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.person));
 
                 placeOrderButton.setEnabled(true);
 
@@ -457,6 +460,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
             MarkerOptions markerOpts = new MarkerOptions()
                     .position(location)
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.person))
                     .title(title);
 
             marker = mMap.addMarker(markerOpts);
@@ -600,6 +604,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                         destinationLocationMarker =
                                 updateMarker(destinationLocationMarker,location,resolvedAddress);
                         destinationAddressEditText.setText(resolvedAddress);
+                        destinationLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.destination));
                     }
 
                     if (addressTag == Constants.START_TAG) {

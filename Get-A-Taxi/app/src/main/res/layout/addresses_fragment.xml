@@ -18,8 +18,10 @@
             android:layout_toLeftOf="@+id/startAddress_btn"
             android:layout_toStartOf="@+id/startAddress_btn"
             android:layout_alignBottom="@+id/startAddress_btn"
-            android:text="@string/enter_current_address"
-            android:layout_alignParentTop="true" />
+            android:hint="@string/enter_current_address"
+            android:layout_alignParentTop="true"
+            android:background="@color/background_material_light"
+            />
         <ImageButton
             android:id="@+id/startAddress_btn"
             android:layout_width="wrap_content"
@@ -37,12 +39,13 @@
             android:id="@+id/destinationAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/enter_destination_address"
+            android:hint="@string/enter_destination_address"
             android:layout_alignParentTop="true"
             android:layout_toLeftOf="@+id/destinationAddress_btn"
             android:layout_toStartOf="@+id/destinationAddress_btn"
-            android:layout_alignBottom="@+id/destinationAddress_btn" />
-
+            android:layout_alignBottom="@+id/destinationAddress_btn"
+            android:background="@color/background_material_light"
+            />
 
         <ImageButton
             android:id="@+id/destinationAddress_btn"
