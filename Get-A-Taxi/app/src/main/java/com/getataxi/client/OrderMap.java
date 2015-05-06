@@ -183,6 +183,10 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         registerReceiver(locationReceiver, filter);
 
         mResultReceiver = new GeocodeResultReceiver(new Handler());
+
+        // Start SignalRNotificationService if needed
+        // TODO: Add checkbox to the menu and check
+        // if it is enabled
     }
 
     @Override
