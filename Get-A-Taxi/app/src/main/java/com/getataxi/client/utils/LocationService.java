@@ -160,25 +160,34 @@ public class LocationService extends Service
 
                 // Notify all interested parties
                 sendBroadcast(broadcastIntent);
-                if(reportLocationEnabled){
-                    LocationDM locationDM = new LocationDM();
-                    locationDM.latitude = loc.getLatitude();
-                    locationDM.longitude = loc.getLongitude();
-                    locationDM.title = reportLocationTitle;
-                    RestClientManager.updateClientLocation(locationDM, getApplicationContext(),  new Callback<LocationDM>() {
-                        @Override
-                        public void success(LocationDM locationDM, Response response) {
-                            Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
-                        }
-
-                        @Override
-                        public void failure(RetrofitError error) {
-                            Log.d(TAG, "ERROR_UPDATING_LOCATION");
-                        }
-                    });
-
-                }
+//                if(reportLocationEnabled){
+//                    updateUserLocationRest(loc);
+//                }
             }
+        }
+
+        /**
+         * Updates client location using the WebAPI backend
+         * Replaced with a SignalRNotificationService with a location broadcast receiver
+         * @param loc
+         */
+        @Deprecated
+        private void updateUserLocationRest(Location loc) {
+            LocationDM locationDM = new LocationDM();
+            locationDM.latitude = loc.getLatitude();
+            locationDM.longitude = loc.getLongitude();
+            locationDM.title = reportLocationTitle;
+            RestClientManager.updateClientLocation(locationDM, getApplicationContext(), new Callback<LocationDM>() {
+                @Override
+                public void success(LocationDM locationDM, Response response) {
+                    Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+                    Log.d(TAG, "ERROR_UPDATING_LOCATION");
+                }
+            });
         }
 
         public void onProviderDisabled(String provider)

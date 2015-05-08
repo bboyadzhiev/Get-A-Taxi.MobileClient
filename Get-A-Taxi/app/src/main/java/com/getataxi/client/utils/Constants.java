@@ -6,7 +6,13 @@ package com.getataxi.client.utils;
 public final class Constants {
 
     public static final String BASE_URL = "http://get-a-taxi.apphb.com";
-    public static final String HUB = "/signalr";
+    public static final String HUB_ENDPOINT = "/signalr";
+    public static final String HUB_PROXY = "trackingHub";
+    public static final String HUB_CONNECT = "Open";
+    public static final String HUB_DISCONNECT = "Close";
+    public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
+    public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
+    public static final String ORDER_ID = "ORDER_ID";
     public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
 
     public static final int PASSWORD_MIN_LENGTH = 4;
