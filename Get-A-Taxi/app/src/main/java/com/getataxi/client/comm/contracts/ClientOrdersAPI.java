@@ -1,5 +1,6 @@
 package com.getataxi.client.comm.contracts;
 
+import com.getataxi.client.comm.models.AssignedOrderDM;
 import com.getataxi.client.comm.models.ClientOrderDM;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public interface ClientOrdersAPI {
     void getOrdersPage(@Path("page") int page, Callback<List<ClientOrderDM>> callback);
 
     @GET("/api/ClientOrders/{id}")
-    void getOrder(@Path("id") int id, Callback<ClientOrderDM> callback);
+    void getOrder(@Path("id") int id, Callback<AssignedOrderDM> callback);
 
     @POST("/api/ClientOrders")
     void addOrder(@Body ClientOrderDM locationDM,  Callback<ClientOrderDM> callback);

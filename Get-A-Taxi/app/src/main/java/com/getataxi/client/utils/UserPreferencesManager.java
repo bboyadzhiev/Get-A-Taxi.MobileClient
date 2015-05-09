@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.getataxi.client.comm.contracts.ClientOrdersAPI;
+import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
@@ -18,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletionService;
 
 
 /**
@@ -29,7 +32,7 @@ public class UserPreferencesManager {
 
     public static DateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
     //".issued":"Thu, 09 Apr 2015 20:48:26 GMT"
-    public static DateFormat tokenDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH);
+    public static DateFormat tokenDateFormat = new SimpleDateFormat(Constants.TOKEN_DATE_FORMAT, Locale.ENGLISH);
 
     public static Date GetDate(String dateString) throws ParseException {
         Date date = new Date();
@@ -75,8 +78,8 @@ public class UserPreferencesManager {
         SharedPreferences.Editor editor = userPrefs.edit();
         Gson gson = new Gson();
         String registerData = gson.toJson(userDM);
-        editor.putString("UserData", registerData);
-        editor.putBoolean("isLogged", false);
+        editor.putString(Constants.USER_DATA, registerData);
+        editor.putBoolean(Constants.IS_LOGGED, false);
         editor.commit();
     }
 
@@ -86,14 +89,14 @@ public class UserPreferencesManager {
         SharedPreferences.Editor editor = userPrefs.edit();
         Gson gson = new Gson();
         String loginData = gson.toJson(userDM);
-        editor.putString("LoginData", loginData);
-        editor.putBoolean("isLogged", true);
+        editor.putString(Constants.LOGIN_DATA, loginData);
+        editor.putBoolean(Constants.IS_LOGGED, true);
         editor.commit();
     }
 
     public static boolean checkForLoginCredentials(Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
-        String userData = userPrefs.getString("LoginData", "");
+        String userData = userPrefs.getString(Constants.LOGIN_DATA, "");
         if(userData.length() > 0){
             return true;
         }
@@ -102,7 +105,7 @@ public class UserPreferencesManager {
 
     public static boolean isLoggedIn(Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
-        return userPrefs.getBoolean("isLogged", false);
+        return userPrefs.getBoolean(Constants.IS_LOGGED, false);
     }
 
 
@@ -113,7 +116,7 @@ public class UserPreferencesManager {
        // boolean email = userPref.contains("email");
        // boolean password = userPref.contains("password");
        // boolean isRegistered  =  email && password;
-        return userPref.contains("UserData");
+        return userPref.contains(Constants.USER_DATA);
     }
 
 
@@ -142,7 +145,7 @@ public class UserPreferencesManager {
 
     public static LoginUserDM getLoginData(Context context){
         SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
-        String userData = userPref.getString("LoginData", "");
+        String userData = userPref.getString(Constants.LOGIN_DATA, "");
        // Log.d("USER_DATA", userData);
         Gson gson = new Gson();
         LoginUserDM userInfo = gson.fromJson(userData, LoginUserDM.class);
@@ -152,7 +155,7 @@ public class UserPreferencesManager {
     public static void logoutUser(Context context){
         SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPref.edit();
-        editor.putBoolean("isLogged", false);
+        editor.putBoolean(Constants.IS_LOGGED, false);
         editor.commit();
     }
 
@@ -162,16 +165,62 @@ public class UserPreferencesManager {
         Gson gson = new Gson();
         Type listOfLocation = new TypeToken<List<LocationDM>>(){}.getType();
         String locationsData = gson.toJson(locationDMList, listOfLocation);
-        editor.putString("Locations", locationsData);
+        editor.putString(Constants.USER_LOCATIONS, locationsData);
         editor.commit();
     }
 
     public static List<LocationDM> loadLocations(Context context){
         SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
-        String locations = userPref.getString("Locations", "");
+        String locations = userPref.getString(Constants.USER_LOCATIONS, "");
         Gson gson = new Gson();
         Type listOfLocation = new TypeToken<List<LocationDM>>(){}.getType();
         List<LocationDM> locationsData = gson.fromJson(locations, listOfLocation);
         return locationsData;
+    }
+
+    @Deprecated
+    public static void storeOrder(ClientOrderDM order, Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
+        Gson gson = new Gson();
+        String orderData = gson.toJson(order);
+        editor.putString(Constants.ORDER_DATA, orderData);
+        editor.commit();
+    }
+
+
+    @Deprecated
+    public static ClientOrderDM loadOrder(Context context){
+        SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        String orderString = userPref.getString(Constants.ORDER_DATA, "");
+        if (orderString.isEmpty()){
+            return null;
+        }
+        Gson gson = new Gson();
+        ClientOrderDM order = gson.fromJson(orderString, ClientOrderDM.class);
+        return order;
+    }
+
+    @Deprecated
+    public static boolean isInActiveOrder(Context context){
+        SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        String inActiveOrder = userPref.getString(Constants.IS_IN_ORDER, "");
+        if (inActiveOrder.isEmpty()){
+            return false;
+        }
+        Gson gson = new Gson();
+        return gson.fromJson(inActiveOrder, Boolean.class);
+    }
+
+    public static void storeOrderId(int orderId, Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
+        editor.putInt(Constants.LAST_ORDER_ID, orderId);
+        editor.commit();
+    }
+
+    public static int getLastOrderId(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        return userPrefs.getInt(Constants.LAST_ORDER_ID, -1);
     }
 }

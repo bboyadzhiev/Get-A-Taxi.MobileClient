@@ -14,7 +14,7 @@ public class ClientOrderDM {
     public int orderId;
 
     @SerializedName("startLat")
-    public int orderLatitude;
+    public double orderLatitude;
 
     @SerializedName("startLng")
     public double orderLongitude;

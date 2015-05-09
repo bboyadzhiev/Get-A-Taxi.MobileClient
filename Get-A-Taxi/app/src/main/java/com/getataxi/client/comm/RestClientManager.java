@@ -4,14 +4,19 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.getataxi.client.comm.contracts.ClientOrdersAPI;
 import com.getataxi.client.comm.contracts.LocationsAPI;
+import com.getataxi.client.comm.contracts.TaxiAPI;
+import com.getataxi.client.comm.models.AssignedOrderDM;
 import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
+import com.getataxi.client.comm.models.TaxiDetailsDM;
 import com.getataxi.client.models.Location;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.UserPreferencesManager;
+import com.squareup.okhttp.Call;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -257,7 +262,6 @@ if (error.getResponse().getStatus() == 401){
 
     // Locations
     public static void getLocations(Context context, Callback<List<LocationDM>> callback){
-        //client.getLocationsService(getAuthorisationHeaders(context)).getLocations(callback);
         List<NameValuePair> heads = getAuthorisationHeaders(context);
         client.getLocationsService(heads).getLocations(callback);
     }
@@ -268,9 +272,8 @@ if (error.getResponse().getStatus() == 401){
 
     public static void updateClientLocation(final LocationDM locationDM, Context context, Callback callback){
         List<NameValuePair> heads = getAuthorisationHeaders(context);
-        //client.headers = heads;
-        LocationsAPI asd = client.getLocationsService(heads);
-        asd.updateLocation(locationDM, callback);
+        LocationsAPI locationsApi = client.getLocationsService(heads);
+        locationsApi.updateLocation(locationDM, callback);
     }
 
     public static void addLocation(final LocationDM locationDM, Context context, Callback<LocationDM> callback){
@@ -282,14 +285,27 @@ if (error.getResponse().getStatus() == 401){
     }
 
     // Orders
+    public static void addOrder(ClientOrderDM order, Context context, Callback<ClientOrderDM> callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        ClientOrdersAPI ordersAPI = client.getOrdersService(heads);
+        ordersAPI.addOrder(order, callback);
+    }
+
     public static void getClientOrders(int page, Context context, Callback<List<ClientOrderDM>> callback){
         client.getOrdersService(getAuthorisationHeaders(context)).getOrdersPage(page, callback);
     }
 
-    public static void getOrder(int page, Context context, Callback<ClientOrderDM> callback){
-
+    public static void getOrder(int id, Context context, Callback<AssignedOrderDM> callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        ClientOrdersAPI ordersAPI = client.getOrdersService(heads);
+        ordersAPI.getOrder(id, callback);
     }
 
-
+    // Taxi
+    public static void getTaxiDetails(int id, Context context, Callback<TaxiDetailsDM> callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        TaxiAPI taxiApi = client.getTaxiService(heads);
+        taxiApi.getTaxiDetails(id, callback);
+    }
 
 }

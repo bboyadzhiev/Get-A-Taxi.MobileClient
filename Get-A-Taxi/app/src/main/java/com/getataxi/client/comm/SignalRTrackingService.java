@@ -8,41 +8,30 @@ import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.getataxi.client.R;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.UserPreferencesManager;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import microsoft.aspnet.signalr.client.Credentials;
 import microsoft.aspnet.signalr.client.LogLevel;
 import microsoft.aspnet.signalr.client.Logger;
 import microsoft.aspnet.signalr.client.SignalRFuture;
-import microsoft.aspnet.signalr.client.http.BasicAuthenticationCredentials;
-import microsoft.aspnet.signalr.client.http.Request;
 import microsoft.aspnet.signalr.client.hubs.HubConnection;
 import microsoft.aspnet.signalr.client.hubs.HubProxy;
-import microsoft.aspnet.signalr.client.hubs.SubscriptionHandler1;
 import microsoft.aspnet.signalr.client.hubs.SubscriptionHandler2;
-
 
 
 /**
  * Created by bvb on 30.4.2015 г..
  */
-public class SignalRNotificationService extends Service {
+public class SignalRTrackingService extends Service {
 
     private HubConnection connection;
-
+    private Intent broadcastIntent;
     private HubProxy proxy;
     @Override
     public void onCreate() {
@@ -52,17 +41,19 @@ public class SignalRNotificationService extends Service {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.LOCATION_UPDATED);
         registerReceiver(locationReceiver, filter);
+
+        broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED);
     }
 
     @Override
-    public void onStart(Intent intent, int startId) {
-        super.onStart(intent, startId);
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
         Toast.makeText(this, "SignalR Service Start", Toast.LENGTH_LONG).show();
 
         int orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
 
         if(orderId == -1){
-            return;
+            return -1;
         }
 
         String server = Constants.BASE_URL + Constants.HUB_ENDPOINT;
@@ -101,20 +92,25 @@ public class SignalRNotificationService extends Service {
         proxy.invoke(Constants.HUB_CONNECT, orderId);
 
         //Then call on() to handle the messages when they are received.
-        proxy.on("ok", new SubscriptionHandler1<String>() {
-            @Override
-            public void run(String msg) {
-                Log.d("result := ", msg);
-            }
-        }, String.class);
+//        proxy.on("ok", new SubscriptionHandler1<String>() {
+//            @Override
+//            public void run(String msg) {
+//                Log.d("result := ", msg);
+//            }
+//        }, String.class);
 
         proxy.on(Constants.HUB_PEER_LOCATION_CHANGED, new SubscriptionHandler2<Double, Double>() {
             @Override
-            public void run(Double aDouble, Double aDouble2) {
-
+            public void run(Double lat, Double lon) {
+                Location loc = new Location("void");
+                loc.setLatitude(lat);
+                loc.setLongitude(lon);
+                broadcastIntent.putExtra(Constants.LOCATION, loc);
+                sendBroadcast(broadcastIntent);
             }
         }, Double.class, Double.class);
 
+        return Service.START_STICKY;
                 //--------------------------------------------------------------------------------
     }
     @Override
@@ -154,4 +150,22 @@ public class SignalRNotificationService extends Service {
             }
         }
     };
+
+
+    public static Thread performOnBackgroundThread(final Runnable runnable) {
+        final Thread t = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    runnable.run();
+                } catch(Exception e) {
+                    Log.d("Error", e.toString());
+                } finally {
+
+                }
+            }
+        };
+        t.start();
+        return t;
+    }
 }

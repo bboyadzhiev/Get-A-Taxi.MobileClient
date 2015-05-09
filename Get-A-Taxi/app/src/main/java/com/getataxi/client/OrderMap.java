@@ -1,5 +1,8 @@
 package com.getataxi.client;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.annotation.TargetApi;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
@@ -7,10 +10,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Point;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -32,9 +35,13 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.getataxi.client.comm.RestClientManager;
+import com.getataxi.client.comm.SignalRTrackingService;
 import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment;
 import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment.SelectLocationDialogListener;
+import com.getataxi.client.comm.models.AssignedOrderDM;
+import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.LocationDM;
+import com.getataxi.client.comm.models.TaxiDetailsDM;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.GeocodeIntentService;
 import com.getataxi.client.utils.LocationService;
@@ -49,6 +56,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.apache.http.HttpStatus;
 import org.parceler.Parcels;
 
 import java.util.ArrayList;
@@ -77,6 +85,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private ImageButton startAddressButton;
     private ImageButton destinationAddressButton;
     private  SelectLocationDialogFragment locationDialog;
+    private View mProgressView;
 
     private RelativeLayout startGroup;
 
@@ -85,12 +94,14 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private GeocodeResultReceiver mResultReceiver;
 
     private Location clientLocation;
+    private Location taxiLocation;
 
     // Initialized by the broadcast receiver
     private LocationDM currentReverseGeocodedLocation = null;
 
     private Marker currentLocationMarker;
     private Marker destinationLocationMarker;
+    private Marker taxiLocationMarker;
     private boolean updateLocationEnabled = true;
 
     private List<LocationDM> favLocations;// = new ArrayList<Location>();
@@ -98,8 +109,21 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private Drawable addToLocationsDrawable;
     private Drawable searchDrawable;
 
+    // Order details
+    private AssignedOrderDM orderDM;
+    private TaxiDetailsDM taxiDetailsDM;
+
+
+    // TRACKING SERVICES
+    protected void initiateTracking(int orderId){
+        Intent trackingIntent = new Intent(OrderMap.this, SignalRTrackingService.class);
+        trackingIntent.putExtra(Constants.ORDER_ID, orderId);
+        startService(trackingIntent);
+    }
+
     /**
      * The receiver for the Location Service location update broadcasts
+     * and the SignalR Notification Service peer location change broadcasts
      */
     private final BroadcastReceiver locationReceiver = new BroadcastReceiver() {
 
@@ -108,7 +132,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             String action = intent.getAction();
 
             if (action.equals(Constants.LOCATION_UPDATED)) {
-                //Toast.makeText(context, "LOCATION UPDATED",Toast.LENGTH_LONG);
+                // Client location change
                 Bundle data = intent.getExtras();
 
                 clientLocation = data.getParcelable(Constants.LOCATION);
@@ -139,6 +163,30 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
                 placeOrderButton.setEnabled(true);
 
+            } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED)){
+                // Taxi location change
+
+                // Checking if we have any order data
+                if(orderDM == null){
+                    return;
+                }
+                if(orderDM.taxiId == -1){
+                    // order has been assigned, updating taxi details
+                    orderDM.taxiPlate = "Getting plate...";
+                    getAssignedOrder();
+                }
+
+                Bundle data = intent.getExtras();
+                taxiLocation = data.getParcelable(Constants.LOCATION);
+
+                String markerTitle = orderDM.taxiPlate;
+                LatLng latLng =  new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
+                taxiLocationMarker = updateMarker(
+                        taxiLocationMarker,
+                        latLng,
+                        markerTitle
+                );
+                taxiLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi));
             }
         }
     };
@@ -155,9 +203,57 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         context = this;
         TelephonyManager tMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
         phoneNumber = tMgr.getLine1Number();
+
+        mProgressView = findViewById(R.id.order_map_progress);
+
         initInputs();
 
         setUpMapIfNeeded();
+
+
+    }
+
+
+    private void getAssignedOrder(){
+        int lastOrderId = UserPreferencesManager.getLastOrderId(context);
+        if(lastOrderId == -1){
+            return;
+        }
+        // Client was in active order status
+        RestClientManager.getOrder(lastOrderId, context, new Callback<AssignedOrderDM>() {
+            @Override
+            public void success(AssignedOrderDM assignedOrderDM, Response response) {
+                int status  = response.getStatus();
+                if (status == HttpStatus.SC_OK){
+                    try {
+                        orderDM = assignedOrderDM;
+                        currentLocationMarker = updateMarker(
+                                currentLocationMarker,
+                                new LatLng(assignedOrderDM.orderLatitude, assignedOrderDM.orderLongitude),
+                                assignedOrderDM.orderAddress);
+                        if(!assignedOrderDM.destinationAddress.isEmpty()){
+                            destinationLocationMarker = updateMarker(destinationLocationMarker,
+                                    new LatLng(assignedOrderDM.destinationLatitude, assignedOrderDM.destinationLongitude),
+                                    assignedOrderDM.destinationAddress);
+                        }
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                if(status == HttpStatus.SC_NOT_FOUND){
+                    // Clear stored order id
+                    UserPreferencesManager.storeOrderId(-1, context);
+                }
+
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                // Clear stored order id
+                UserPreferencesManager.storeOrderId(-1, context);
+            }
+        });
     }
 
     @Override
@@ -177,14 +273,16 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         locationService.putExtra(Constants.LOCATION_REPORT_TITLE, phoneNumber);
         context.startService(locationService);
 
-        // Register for Location Service broadcasts
         IntentFilter filter = new IntentFilter();
+        // Register for Location Service broadcasts
         filter.addAction(Constants.LOCATION_UPDATED);
+        // And peer location change
+        filter.addAction(Constants.HUB_PEER_LOCATION_CHANGED);
         registerReceiver(locationReceiver, filter);
 
         mResultReceiver = new GeocodeResultReceiver(new Handler());
 
-        // Start SignalRNotificationService if needed
+        // Start SignalRTrackingService if needed
         // TODO: Add checkbox to the menu and check
         // if it is enabled
     }
@@ -196,7 +294,12 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         Intent locationService = new Intent(OrderMap.this, LocationService.class);
         stopService(locationService);
 
+        // Stop tracking service
+        Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
+        stopService(trackingService);
+
         unregisterReceiver(locationReceiver);
+
     }
 
 
@@ -258,19 +361,64 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
         placeOrderButton = (Button)findViewById(R.id.btn_confirm_location);
         placeOrderButton.setEnabled(false);
+
+        // Place Order !!!!!!!!
         placeOrderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                placeOrderButton.setEnabled(false);
                 if (!updateLocationEnabled) {
                     // Stop location service
                     Intent stopLocationServiceIntent = new Intent(OrderMap.this, LocationService.class);
                     context.stopService(stopLocationServiceIntent);
                 }
 
-                // TODO: Send new order
+                showProgress(true);
 
+                final ClientOrderDM clientOrder = new ClientOrderDM();
+                clientOrder.orderLatitude = currentReverseGeocodedLocation.latitude;
+                clientOrder.orderLongitude =  currentReverseGeocodedLocation.longitude;
+                clientOrder.orderAddress = startAddressEditText.getText().toString();
+
+                RestClientManager.addOrder(clientOrder, context, new Callback<ClientOrderDM>() {
+                    @Override
+                    public void success(ClientOrderDM clientOrder, Response response) {
+                        showProgress(false);
+                        int status  = response.getStatus();
+                        if (status == HttpStatus.SC_OK){
+                            try {
+                                orderDM = fromClientOrderDM(clientOrder);
+                                UserPreferencesManager.storeOrderId(clientOrder.orderId, context);
+                                initiateTracking(clientOrder.orderId);
+                            } catch (IllegalStateException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void failure(RetrofitError error) {
+                        // TODO: placing order failure
+                        showProgress(false);
+                        Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
+                    }
+                } );
             }
         });
+    }
+
+    private AssignedOrderDM fromClientOrderDM(ClientOrderDM clientOrder) {
+        AssignedOrderDM order = new AssignedOrderDM();
+        order.orderId = clientOrder.orderId;
+        order.orderAddress = clientOrder.orderAddress;
+        order.orderLatitude = clientOrder.orderLatitude;
+        order.orderLongitude = clientOrder.orderLongitude;
+        order.destinationAddress = clientOrder.destinationAddress;
+        order.destinationLatitude = clientOrder.destinationLatitude;
+        order.destinationLongitude = clientOrder.destinationLongitude;
+        order.userComment = clientOrder.userComment;
+        order.taxiId = -1;
+        return  order;
     }
 
 
@@ -476,6 +624,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         return marker;
     }
 
+
     // GEOCODE METHODS AND RECEIVER
     /**
      * Initiates geocode of an address (get the address's location)
@@ -571,20 +720,23 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                             placeOrderButton.setEnabled(true);
 
                             // Resolve address only once
-                            RestClientManager.updateClientLocation(currentReverseGeocodedLocation, context, new Callback<LocationDM>() {
-                                @Override
-                                public void success(LocationDM locationDM, Response response) {
-                                    // Store locations to prefs
-                                    LocationDM updatedLocation = locationDM;
+                            if(updateLocationEnabled) {
+                                // Update client's location in the system
+                                RestClientManager.updateClientLocation(currentReverseGeocodedLocation, context, new Callback<LocationDM>() {
+                                    @Override
+                                    public void success(LocationDM locationDM, Response response) {
+                                        // Store locations to prefs
+                                        LocationDM updatedLocation = locationDM;
 
-                                    Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
-                                }
+                                        Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
+                                    }
 
-                                @Override
-                                public void failure(RetrofitError error) {
-                                    Log.d(TAG, "ERROR_UPDATING_LOCATION");
-                                }
-                            });
+                                    @Override
+                                    public void failure(RetrofitError error) {
+                                        Log.d(TAG, "ERROR_UPDATING_LOCATION");
+                                    }
+                                });
+                            }
                         }
                     }
                     // Show a toast message if an address was found.
@@ -641,4 +793,31 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
         }
     }
+
+    /**
+     * Shows the ordering progress UI
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+    public void showProgress(final boolean show) {
+        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
+        // for very easy animations. If available, use these APIs to fade-in
+        // the progress spinner.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+
+            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            mProgressView.animate().setDuration(shortAnimTime).alpha(
+                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+                }
+            });
+        } else {
+            // The ViewPropertyAnimator APIs are not available, so simply show
+            // and hide the relevant UI components.
+            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+    }
+
 }

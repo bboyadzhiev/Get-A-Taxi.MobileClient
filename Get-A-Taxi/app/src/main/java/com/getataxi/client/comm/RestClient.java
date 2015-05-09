@@ -4,6 +4,7 @@ import com.getataxi.client.comm.contracts.AccountAPI;
 import com.getataxi.client.comm.contracts.ClientOrdersAPI;
 import com.getataxi.client.comm.contracts.LocationsAPI;
 
+import com.getataxi.client.comm.contracts.TaxiAPI;
 import com.getataxi.client.utils.Constants;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -29,6 +30,7 @@ public class RestClient{
     private AccountAPI accountService;
     private ClientOrdersAPI ordersService;
     private LocationsAPI locationsService;
+    private TaxiAPI taxiService;
     private List<NameValuePair> headers;
 
 
@@ -71,6 +73,7 @@ public class RestClient{
         accountService = restAdapter.create(AccountAPI.class);
         ordersService = restAdapter.create(ClientOrdersAPI.class);
         locationsService = restAdapter.create(LocationsAPI.class);
+        taxiService = restAdapter.create(TaxiAPI.class);
     }
 
     public AccountAPI getAccountService(List<NameValuePair> headers){
@@ -98,4 +101,11 @@ public class RestClient{
         return locationsService;
     }
 
+    public TaxiAPI getTaxiService(List<NameValuePair> headers){
+        this.headers.clear();
+        if (headers != null) {
+            this.headers = headers;
+        }
+        return taxiService;
+    }
 }

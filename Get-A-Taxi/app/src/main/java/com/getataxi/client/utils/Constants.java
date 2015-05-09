@@ -5,6 +5,10 @@ package com.getataxi.client.utils;
  */
 public final class Constants {
 
+    // APP NAME
+    public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
+
+    // COMMUNICATIONS
     public static final String BASE_URL = "http://get-a-taxi.apphb.com";
     public static final String HUB_ENDPOINT = "/signalr";
     public static final String HUB_PROXY = "trackingHub";
@@ -13,8 +17,13 @@ public final class Constants {
     public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
     public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
     public static final String ORDER_ID = "ORDER_ID";
-    public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
 
+    // Connection timeouts in milliseconds
+    public static final int READ_TIMEOUT = 15000;
+    public static final int CONNECT_TIMEOUT = 15000;
+    public static final int WRITE_TIMEOUT = 5000;
+
+    // CONSTRAINTS
     public static final int PASSWORD_MIN_LENGTH = 4;
     public static final int EMAIL_MIN_LENGTH = 4;
 
@@ -44,18 +53,22 @@ public final class Constants {
     public static final String LOCATION_REPORT_ENABLED = PACKAGE_NAME + ".LOCATION_REPORT_ENABLED";
     public static final String LOCATION_REPORT_TITLE = PACKAGE_NAME + ".LOCATION_REPORT_TITLE";
 
+    // Times
     public static final int LOCATION_UPDATE_INTERVAL = 10000; // milliseconds
     public static final int LOCATION_UPDATE_DISTANCE = 1; // meters
-
     public static final int LOCATION_TIMEOUT = 1000 * 60 * 5; // five minutes;
 
 
     public static final String USER_LOCATIONS =  PACKAGE_NAME + ".USER_LOCATIONS";
 
-    // Connection timeouts in milliseconds
-    public static final int READ_TIMEOUT = 15000;
-    public static final int CONNECT_TIMEOUT = 15000;
-    public static final int WRITE_TIMEOUT = 5000;
+    // USER PREFERENCES
+    public static final String TOKEN_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss z";
+    public static final String USER_DATA = "UserData";
+    public static final String LOGIN_DATA = "LoginData";
+    public static final String IS_LOGGED = "isLogged";
+    public static final String ORDER_DATA = "OrderData";
+    public static final String IS_IN_ORDER = "isInOrder";
+    public static final String LAST_ORDER_ID = PACKAGE_NAME + ".lastOrderId";
 
     // DEBUGGING STRINGS
 

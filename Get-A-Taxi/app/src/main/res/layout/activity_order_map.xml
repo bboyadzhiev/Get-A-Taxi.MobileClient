@@ -7,12 +7,25 @@
     android:layout_height="fill_parent"
     android:gravity="bottom" >
 
+
+
     <!-- Google Maps Fragment -->
     <fragment
         android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:name="com.google.android.gms.maps.SupportMapFragment" />
+
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/order_map_progress"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="gone" />
 
     <!-- Send GPS data button -->
     <Button

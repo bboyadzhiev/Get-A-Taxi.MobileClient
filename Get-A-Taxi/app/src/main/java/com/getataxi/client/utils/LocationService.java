@@ -168,7 +168,7 @@ public class LocationService extends Service
 
         /**
          * Updates client location using the WebAPI backend
-         * Replaced with a SignalRNotificationService with a location broadcast receiver
+         * Replaced with a SignalRTrackingService with a location broadcast receiver
          * @param loc
          */
         @Deprecated
