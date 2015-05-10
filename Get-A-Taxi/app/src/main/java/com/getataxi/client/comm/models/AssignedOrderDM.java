@@ -15,6 +15,6 @@ public class AssignedOrderDM extends ClientOrderDM {
     public String taxiPlate;
     @SerializedName("driverPhone")
     public String driverPhone;
-    @SerializedName("DriverName")
-    public String DriverName;
+    @SerializedName("driverName")
+    public String driverName;
 }

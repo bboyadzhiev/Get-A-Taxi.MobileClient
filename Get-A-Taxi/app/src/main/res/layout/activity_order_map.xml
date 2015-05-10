@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:text="@string/confirm_location_txt" />
+        android:text="@string/confirm_order_txt" />
 
     <!-- Google Maps Fragment -->
     <fragment

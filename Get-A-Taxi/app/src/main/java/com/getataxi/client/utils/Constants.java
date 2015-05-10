@@ -49,9 +49,12 @@ public final class Constants {
     //LOCATION SERVICE
     public static final String LOCATION_UPDATED = PACKAGE_NAME + "LOCATION_UPDATED";
     public static final String LOCATION = PACKAGE_NAME + ".LOCATION";
+    public static final String LOCATION_REPORT_TITLE = PACKAGE_NAME + ".LOCATION_REPORT_TITLE";
+
 
     public static final String LOCATION_REPORT_ENABLED = PACKAGE_NAME + ".LOCATION_REPORT_ENABLED";
-    public static final String LOCATION_REPORT_TITLE = PACKAGE_NAME + ".LOCATION_REPORT_TITLE";
+
+
 
     // Times
     public static final int LOCATION_UPDATE_INTERVAL = 10000; // milliseconds
@@ -69,6 +72,9 @@ public final class Constants {
     public static final String ORDER_DATA = "OrderData";
     public static final String IS_IN_ORDER = "isInOrder";
     public static final String LAST_ORDER_ID = PACKAGE_NAME + ".lastOrderId";
+    public static final String TRACKING_ENABLED = PACKAGE_NAME + "trackingEnabled";
+
+    // UI - no UI strings should be here!
 
     // DEBUGGING STRINGS
 

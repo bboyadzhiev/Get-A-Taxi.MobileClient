@@ -223,4 +223,16 @@ public class UserPreferencesManager {
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         return userPrefs.getInt(Constants.LAST_ORDER_ID, -1);
     }
+
+    public static void setTrackingState(boolean trackingEnabled, Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
+        editor.putBoolean(Constants.TRACKING_ENABLED, trackingEnabled);
+        editor.commit();
+    }
+
+    public static boolean getTrackingState(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        return userPrefs.getBoolean(Constants.TRACKING_ENABLED, false);
+    }
 }

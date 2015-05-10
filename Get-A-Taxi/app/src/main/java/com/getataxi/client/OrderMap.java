@@ -41,7 +41,6 @@ import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment.SelectLocat
 import com.getataxi.client.comm.models.AssignedOrderDM;
 import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.LocationDM;
-import com.getataxi.client.comm.models.TaxiDetailsDM;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.GeocodeIntentService;
 import com.getataxi.client.utils.LocationService;
@@ -76,7 +75,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private Context context;
     private  String phoneNumber;
 
-    private Button placeOrderButton;
+    private Button orderButton;
     // Addresses inputs
     private AddressesInputsFragment locationsInputs;
 
@@ -84,7 +83,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private EditText destinationAddressEditText;
     private ImageButton startAddressButton;
     private ImageButton destinationAddressButton;
-    private  SelectLocationDialogFragment locationDialog;
+    private SelectLocationDialogFragment locationDialog;
     private View mProgressView;
 
     private RelativeLayout startGroup;
@@ -102,7 +101,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private Marker currentLocationMarker;
     private Marker destinationLocationMarker;
     private Marker taxiLocationMarker;
-    private boolean updateLocationEnabled = true;
+    private boolean trackingEnabled;
 
     private List<LocationDM> favLocations;// = new ArrayList<Location>();
 
@@ -111,19 +110,19 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
     // Order details
     private AssignedOrderDM orderDM;
-    private TaxiDetailsDM taxiDetailsDM;
 
 
     // TRACKING SERVICES
     protected void initiateTracking(int orderId){
         Intent trackingIntent = new Intent(OrderMap.this, SignalRTrackingService.class);
+        trackingIntent.putExtra(Constants.LOCATION_REPORT_ENABLED, trackingEnabled);
         trackingIntent.putExtra(Constants.ORDER_ID, orderId);
         startService(trackingIntent);
     }
 
     /**
-     * The receiver for the Location Service location update broadcasts
-     * and the SignalR Notification Service peer location change broadcasts
+     * The receiver for the Location Service - location update broadcasts
+     * and the SignalR Notification Service - peer location change broadcasts
      */
     private final BroadcastReceiver locationReceiver = new BroadcastReceiver() {
 
@@ -161,18 +160,19 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                 );
                 currentLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.person));
 
-                placeOrderButton.setEnabled(true);
+                orderButton.setEnabled(true);
 
             } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED)){
                 // Taxi location change
 
                 // Checking if we have any order data
                 if(orderDM == null){
+                    orderDM = new AssignedOrderDM();
                     return;
                 }
                 if(orderDM.taxiId == -1){
-                    // order has been assigned, updating taxi details
-                    orderDM.taxiPlate = "Getting plate...";
+                    orderDM.taxiPlate = getResources().getString(R.string.getting_details_txt);
+                    // Try to get the assigned order details
                     getAssignedOrder();
                 }
 
@@ -194,7 +194,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
     /**
      * onCreate
-     * @param savedInstanceState
+     * @param savedInstanceState - the bundle
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -210,6 +210,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
         setUpMapIfNeeded();
 
+        getAssignedOrder();
 
     }
 
@@ -217,12 +218,15 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private void getAssignedOrder(){
         int lastOrderId = UserPreferencesManager.getLastOrderId(context);
         if(lastOrderId == -1){
+            // No stored order id!
             return;
         }
         // Client was in active order status
         RestClientManager.getOrder(lastOrderId, context, new Callback<AssignedOrderDM>() {
             @Override
             public void success(AssignedOrderDM assignedOrderDM, Response response) {
+                orderButton.setText(getResources().getString(R.string.cancel_order_txt));
+                orderButton.setEnabled(true);
                 int status  = response.getStatus();
                 if (status == HttpStatus.SC_OK){
                     try {
@@ -236,6 +240,11 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                                     new LatLng(assignedOrderDM.destinationLatitude, assignedOrderDM.destinationLongitude),
                                     assignedOrderDM.destinationAddress);
                         }
+
+                        if(orderDM.taxiId == -1){
+                            // No taxi assigned yet
+
+                        }
                     } catch (IllegalStateException e) {
                         e.printStackTrace();
                     }
@@ -243,7 +252,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
                 if(status == HttpStatus.SC_NOT_FOUND){
                     // Clear stored order id
-                    UserPreferencesManager.storeOrderId(-1, context);
+                    clearStoredOrder();
                 }
 
             }
@@ -251,10 +260,18 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             @Override
             public void failure(RetrofitError error) {
                 // Clear stored order id
-                UserPreferencesManager.storeOrderId(-1, context);
+                clearStoredOrder();
             }
         });
     }
+
+    private void clearStoredOrder() {
+        UserPreferencesManager.storeOrderId(-1, context);
+        orderDM = null;
+        orderButton.setText(getResources().getString(R.string.confirm_order_txt));
+        orderButton.setEnabled(true);
+    }
+
 
     @Override
     protected void onStart(){
@@ -267,9 +284,11 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         super.onResume();
         setUpMapIfNeeded();
 
+        trackingEnabled = UserPreferencesManager.getTrackingState(context);
+
         // Start location service
         Intent locationService = new Intent(OrderMap.this, LocationService.class);
-        locationService.putExtra(Constants.LOCATION_REPORT_ENABLED, updateLocationEnabled);
+
         locationService.putExtra(Constants.LOCATION_REPORT_TITLE, phoneNumber);
         context.startService(locationService);
 
@@ -282,9 +301,6 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
         mResultReceiver = new GeocodeResultReceiver(new Handler());
 
-        // Start SignalRTrackingService if needed
-        // TODO: Add checkbox to the menu and check
-        // if it is enabled
     }
 
     @Override
@@ -359,15 +375,15 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                 .findFragmentById(R.id.addressesInputs_fragment);
         getFragmentManager().beginTransaction().hide(locationsInputs).commit();
 
-        placeOrderButton = (Button)findViewById(R.id.btn_confirm_location);
-        placeOrderButton.setEnabled(false);
+        orderButton = (Button)findViewById(R.id.btn_confirm_location);
+        orderButton.setEnabled(false);
 
-        // Place Order !!!!!!!!
-        placeOrderButton.setOnClickListener(new View.OnClickListener() {
+        // Place Order and get it with the order's id
+        orderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                placeOrderButton.setEnabled(false);
-                if (!updateLocationEnabled) {
+                orderButton.setEnabled(false);
+                if (!trackingEnabled) {
                     // Stop location service
                     Intent stopLocationServiceIntent = new Intent(OrderMap.this, LocationService.class);
                     context.stopService(stopLocationServiceIntent);
@@ -375,36 +391,88 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
                 showProgress(true);
 
-                final ClientOrderDM clientOrder = new ClientOrderDM();
-                clientOrder.orderLatitude = currentReverseGeocodedLocation.latitude;
-                clientOrder.orderLongitude =  currentReverseGeocodedLocation.longitude;
-                clientOrder.orderAddress = startAddressEditText.getText().toString();
+                int lastOrderId = UserPreferencesManager.getLastOrderId(context);
+                if(lastOrderId != -1){
+                    // Order in progress, try to cancel it
+                    RestClientManager.cancelOrder(lastOrderId, context, new Callback<ClientOrderDM>() {
+                        @Override
+                        public void success(ClientOrderDM clientOrderDM, Response response) {
+                            showProgress(false);
+                            int status = response.getStatus();
+                            clearStoredOrder();
+                            if (status == HttpStatus.SC_OK) {
+                                // Cancelled successfully
+                                Toast.makeText(context,  getResources().getString(R.string.order_cancelled_toast), Toast.LENGTH_LONG).show();
+                                return;
+                            }
+
+                            if (status == HttpStatus.SC_BAD_REQUEST) {
+                                // Cancelled or finished already
+                                Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                                return;
+                            }
+
+                            Toast.makeText(context, getResources().getString(R.string.last_order_not_found_toast), Toast.LENGTH_LONG).show();
+
+                        }
+
+                        @Override
+                        public void failure(RetrofitError error) {
+                            showProgress(false);
+                            orderButton.setText( getResources().getString(R.string.cancel_order_txt));
+                            orderButton.setEnabled(true);
+                        }
+                    });
+                }
+
+
+                // No order in progress, place new order
+                ClientOrderDM clientOrder = getClientOrderDM();
 
                 RestClientManager.addOrder(clientOrder, context, new Callback<ClientOrderDM>() {
                     @Override
                     public void success(ClientOrderDM clientOrder, Response response) {
                         showProgress(false);
-                        int status  = response.getStatus();
-                        if (status == HttpStatus.SC_OK){
+                        int status = response.getStatus();
+
+                            if (status == HttpStatus.SC_OK) {
                             try {
                                 orderDM = fromClientOrderDM(clientOrder);
                                 UserPreferencesManager.storeOrderId(clientOrder.orderId, context);
                                 initiateTracking(clientOrder.orderId);
+                                orderButton.setText(getResources().getString(R.string.cancel_order_txt));
+                                orderButton.setEnabled(true);
                             } catch (IllegalStateException e) {
                                 e.printStackTrace();
                             }
+                        }
+
+                        if(status == HttpStatus.SC_BAD_REQUEST){
+                            Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
                         }
                     }
 
                     @Override
                     public void failure(RetrofitError error) {
-                        // TODO: placing order failure
                         showProgress(false);
                         Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
+                        orderButton.setText(getResources().getString(R.string.confirm_order_txt));
+                        orderButton.setEnabled(true);
                     }
-                } );
+                });
             }
         });
+    }
+
+    private ClientOrderDM getClientOrderDM() {
+        ClientOrderDM clientOrder = new ClientOrderDM();
+        clientOrder.orderLatitude = currentReverseGeocodedLocation.latitude;
+        clientOrder.orderLongitude = currentReverseGeocodedLocation.longitude;
+        clientOrder.orderAddress = startAddressEditText.getText().toString();
+        clientOrder.destinationAddress = destinationAddressEditText.getText().toString();
+        clientOrder.destinationLatitude = destinationLocationMarker.getPosition().latitude;
+        clientOrder.destinationLongitude = destinationLocationMarker.getPosition().longitude;
+        return clientOrder;
     }
 
     private AssignedOrderDM fromClientOrderDM(ClientOrderDM clientOrder) {
@@ -427,6 +495,11 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_order, menu);
+        if(UserPreferencesManager.getTrackingState(context)){
+            menu.findItem(R.id.tracking_location_cb).setChecked(true);
+        } else {
+            menu.findItem(R.id.tracking_location_cb).setChecked(false);
+        }
         return true;
     }
 
@@ -438,6 +511,21 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (ChooseLocationDialog(id)) return true;
+
+        if(id == R.id.tracking_location_cb){
+            item.setChecked(!item.isChecked());
+            trackingEnabled = item.isChecked();
+            if(trackingEnabled) {
+                Toast.makeText(context, R.string.tracking_enabled_txt, Toast.LENGTH_LONG).show();
+            }else{
+                Toast.makeText(context, R.string.tracking_disabled_txt, Toast.LENGTH_LONG).show();
+            }
+
+
+            UserPreferencesManager.setTrackingState(trackingEnabled, context);
+            return true;
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -464,14 +552,13 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                     locationDialog.show(fm, destinationDialogTag);
                     return true;
                 }
-                if (id == R.id.select_start_location) {
-                    startDialogTag = locationDialog.getTag();
-                    locationDialog.show(fm, startDialogTag);
-                    return true;
-                }
+
+                startDialogTag = locationDialog.getTag();
+                locationDialog.show(fm, startDialogTag);
+                return true;
+            } else {
+                Toast.makeText(context, R.string.no_user_locations_toast, Toast.LENGTH_LONG).show();
             }
-        } else {
-            Toast.makeText(context, R.string.no_user_locations_toast, Toast.LENGTH_LONG);
         }
         return false;
     }
@@ -484,10 +571,10 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {
         String tag = dialog.getTag();
-        if (tag == destinationDialogTag){
+        if (tag.equals(destinationDialogTag)){
 
         }
-        if (tag == startDialogTag){
+        if (tag.equals(startDialogTag)){
 
         }
         dialog.dismiss();
@@ -497,10 +584,10 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     public void onLocationSelect(DialogFragment dialog, LocationDM locationDM) {
         // Location has been selected
         String tag = dialog.getTag();
-        if (tag == destinationDialogTag){
+        if (tag.equals(destinationDialogTag)){
 
         }
-        if (tag == startDialogTag){
+        if (tag.equals(startDialogTag)){
 
         }
         dialog.dismiss();
@@ -717,17 +804,19 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                             currentReverseGeocodedLocation.title = addressLines[0];
 
                             // Enable ordering input
-                            placeOrderButton.setEnabled(true);
+                            orderButton.setEnabled(true);
 
                             // Resolve address only once
-                            if(updateLocationEnabled) {
+                            if(trackingEnabled) {
                                 // Update client's location in the system
                                 RestClientManager.updateClientLocation(currentReverseGeocodedLocation, context, new Callback<LocationDM>() {
                                     @Override
                                     public void success(LocationDM locationDM, Response response) {
-                                        // Store locations to prefs
-                                        LocationDM updatedLocation = locationDM;
-
+                                        int status = response.getStatus();
+                                        clearStoredOrder();
+                                        if (status == HttpStatus.SC_OK) {
+                                            LocationDM updatedLocation = locationDM;
+                                        }
                                         Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
                                     }
 
@@ -740,7 +829,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                         }
                     }
                     // Show a toast message if an address was found.
-                    Toast.makeText(context, R.string.address_found, Toast.LENGTH_LONG);
+                    Toast.makeText(context, R.string.address_found, Toast.LENGTH_LONG).show();
 
                 }else if(geocodeType == Constants.GEOCODE){
                     // Address's location was received along with complete address data
@@ -770,17 +859,16 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                     }
 
                     // Show a toast message if an address was found.
-                    Toast.makeText(context, R.string.location_found, Toast.LENGTH_LONG);
+                    Toast.makeText(context, R.string.location_found, Toast.LENGTH_LONG).show();
                 }
 
             } else if (resultCode == Constants.FAILURE_RESULT){
-                // TODO: Review failure reactions
                 if(geocodeType == Constants.REVERSE_GEOCODE) {
                     // Location's address was not found, show the necessary inputs!
-                    Toast.makeText(context, R.string.address_not_found, Toast.LENGTH_LONG);
+                    Toast.makeText(context, R.string.address_not_found, Toast.LENGTH_LONG).show();
                 } else if(geocodeType == Constants.GEOCODE){
                     // Address's location was not found
-                    Toast.makeText(context, R.string.location_not_found, Toast.LENGTH_LONG);
+                    Toast.makeText(context, R.string.location_not_found, Toast.LENGTH_LONG).show();
                 }
 
                 if (addressTag == Constants.START_TAG){

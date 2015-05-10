@@ -172,7 +172,6 @@ public class RegisterActivity extends ActionBarActivity{
 
                 @Override
                 public void failure(RetrofitError error) {
-                    // TODO: Fix error message
                     showProgress(false);
                     Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
                 }

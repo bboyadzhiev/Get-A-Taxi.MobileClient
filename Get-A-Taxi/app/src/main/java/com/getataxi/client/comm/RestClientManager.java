@@ -114,7 +114,6 @@ public class RestClientManager {
 //
 //            @Override
 //            public void failure(RetrofitError error) {
-//             //   TODO: Fix error message
 //                String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
 //                Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
 //
@@ -144,7 +143,6 @@ public class RestClientManager {
 //
 //            @Override
 //            public void failure(RetrofitError error) {
-//                //TODO: Fix error message
 //                Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
 //            }
 //        });
@@ -171,7 +169,6 @@ public class RestClientManager {
 
             @Override
             public void failure(RetrofitError error) {
-                // TODO: Fix error message
                 String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
                 Log.d("RESTMANAGER: ", "Token update FAILED!");
                 Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
@@ -225,7 +222,6 @@ if (error.getResponse().getStatus() == 401){
 //
 //            @Override
 //            public void failure(RetrofitError error) {
-//                // TODO: Fix error message
 //                String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
 //                Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
 //
@@ -254,7 +250,6 @@ if (error.getResponse().getStatus() == 401){
 //
 //            @Override
 //            public void failure(RetrofitError error) {
-//                // TODO: Fix error message
 //                Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
 //            }
 //        });
@@ -299,6 +294,12 @@ if (error.getResponse().getStatus() == 401){
         List<NameValuePair> heads = getAuthorisationHeaders(context);
         ClientOrdersAPI ordersAPI = client.getOrdersService(heads);
         ordersAPI.getOrder(id, callback);
+    }
+
+    public static void cancelOrder(int id, Context context, Callback<ClientOrderDM> callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        ClientOrdersAPI ordersAPI = client.getOrdersService(heads);
+        ordersAPI.cancelOrder(id, callback);
     }
 
     // Taxi

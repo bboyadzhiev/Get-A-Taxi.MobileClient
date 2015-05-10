@@ -27,7 +27,7 @@ public class LocationService extends Service
     public LocationManager locationManager;
     public ClientLocationListener listener;
     public Location previousBestLocation = null;
-    private boolean reportLocationEnabled = false;
+
     private String reportLocationTitle;
     //double latitude;
     //double longitude;
@@ -52,7 +52,6 @@ public class LocationService extends Service
         super.onStartCommand(intent, flags, startId);
 
         Bundle b = intent.getExtras();
-        reportLocationEnabled = b.getBoolean(Constants.LOCATION_REPORT_ENABLED, false);
         reportLocationTitle = b.getString(Constants.LOCATION_REPORT_TITLE, "Unknown");
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);

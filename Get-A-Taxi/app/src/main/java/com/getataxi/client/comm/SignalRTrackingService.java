@@ -33,6 +33,7 @@ public class SignalRTrackingService extends Service {
     private HubConnection connection;
     private Intent broadcastIntent;
     private HubProxy proxy;
+    private boolean reportLocationEnabled = false;
     @Override
     public void onCreate() {
         super.onCreate();
@@ -51,6 +52,7 @@ public class SignalRTrackingService extends Service {
         Toast.makeText(this, "SignalR Service Start", Toast.LENGTH_LONG).show();
 
         int orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
+        reportLocationEnabled = intent.getBooleanExtra(Constants.LOCATION_REPORT_ENABLED, false);
 
         if(orderId == -1){
             return -1;
@@ -80,10 +82,8 @@ public class SignalRTrackingService extends Service {
         try {
             awaitConnection.get();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (ExecutionException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -124,8 +124,6 @@ public class SignalRTrackingService extends Service {
         return null;
     }
 
-    private Location location;
-
     /**
      * The receiver for the Location Service location update broadcasts
      */
@@ -135,10 +133,14 @@ public class SignalRTrackingService extends Service {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
+            if(!reportLocationEnabled){
+                return;
+            }
+
             if (action.equals(Constants.LOCATION_UPDATED)) {
                 Bundle data = intent.getExtras();
 
-                location = data.getParcelable(Constants.LOCATION);
+                Location location = data.getParcelable(Constants.LOCATION);
 
                 double lat = location.getLatitude();
                 double lon = location.getLongitude();
