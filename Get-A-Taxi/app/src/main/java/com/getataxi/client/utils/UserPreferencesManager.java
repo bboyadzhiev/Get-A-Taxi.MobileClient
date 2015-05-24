@@ -9,6 +9,7 @@ import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
+import com.getataxi.client.comm.models.TaxiDetailsDM;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -49,14 +50,14 @@ public class UserPreferencesManager {
      * Checks if token has expired.
      * @return true if token has expired
      */
-    public static boolean tokenHasExpired(LoginUserDM loginData) {
-        if(loginData == null){
+    public static boolean tokenHasExpired(String expires) {
+        if(expires == null || expires.isEmpty()){
             return true;
         }
         Date tokenExpirationDate = null;
         Date now =  new Date();
         try {
-            tokenExpirationDate = GetDate(loginData.expires);
+            tokenExpirationDate = GetDate(expires);
             //now = tokenDateFormat.parse(tokenDateFormat.format(GetDate(null)));
 
         } catch (ParseException e) {
@@ -71,6 +72,18 @@ public class UserPreferencesManager {
             }
         }
         return false;
+    }
+
+    public static String getBaseUrl(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        return userPrefs.getString(Constants.BASE_URL_STORAGE, Constants.DEFAULT_URL);
+    }
+
+    public static void setBaseUrl(Context context, String base_url){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
+        editor.putString(Constants.BASE_URL_STORAGE, base_url);
+        editor.commit();
     }
 
     public static void saveUserData(RegisterUserDM userDM, Context context){
@@ -212,6 +225,7 @@ public class UserPreferencesManager {
         return gson.fromJson(inActiveOrder, Boolean.class);
     }
 
+    // Order
     public static void storeOrderId(int orderId, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
@@ -224,6 +238,19 @@ public class UserPreferencesManager {
         return userPrefs.getInt(Constants.LAST_ORDER_ID, -1);
     }
 
+    public static void clearOrder(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
+        editor.putInt(Constants.LAST_ORDER_ID, -1);
+        editor.commit();
+    }
+
+    public static boolean hasAssignedOrder(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        return userPrefs.getInt(Constants.LAST_ORDER_ID, -1) != -1;
+    }
+
+    //Tracking
     public static void setTrackingState(boolean trackingEnabled, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
@@ -235,4 +262,6 @@ public class UserPreferencesManager {
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         return userPrefs.getBoolean(Constants.TRACKING_ENABLED, false);
     }
+
+
 }

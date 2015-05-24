@@ -39,7 +39,8 @@ public class RestClient{
         this.headers = new ArrayList<NameValuePair>();
         this.baseUrl = baseUrl;
         Gson gson = new GsonBuilder()
-                .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS'Z'")
+                // .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS'Z'")
+                .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS")
                 .create();
 
         RequestInterceptor requestInterceptor = new RequestInterceptor() {
@@ -95,16 +96,19 @@ public class RestClient{
 
     public LocationsAPI getLocationsService(List<NameValuePair> headersPassed){
       //  this.headers.clear();
-        if (headersPassed != null || !headersPassed.isEmpty()) {
+        if (headersPassed != null && !headersPassed.isEmpty()) {
             this.headers = headersPassed;
         }
         return locationsService;
     }
 
-    public TaxiAPI getTaxiService(List<NameValuePair> headers){
-        this.headers.clear();
-        if (headers != null) {
-            this.headers = headers;
+    public TaxiAPI getTaxiService(List<NameValuePair> heads){
+        if (this.headers != null) {
+            this.headers.clear();
+            this.headers = heads;
+        } else {
+            this.headers = new ArrayList<NameValuePair>();
+            this.headers.addAll(heads);
         }
         return taxiService;
     }

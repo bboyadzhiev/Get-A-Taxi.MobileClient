@@ -41,6 +41,7 @@ import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment.SelectLocat
 import com.getataxi.client.comm.models.AssignedOrderDM;
 import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.LocationDM;
+import com.getataxi.client.comm.models.TaxiDetailsDM;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.GeocodeIntentService;
 import com.getataxi.client.utils.LocationService;
@@ -75,7 +76,9 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private Context context;
     private  String phoneNumber;
 
-    private Button orderButton;
+    private Button cancelOrderButton;
+    private Button placeOrderButton;
+
     // Addresses inputs
     private AddressesInputsFragment locationsInputs;
 
@@ -93,23 +96,25 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     private GeocodeResultReceiver mResultReceiver;
 
     private Location clientLocation;
-    private Location taxiLocation;
+    private Marker currentLocationMarker;
+    private Marker destinationLocationMarker;
+    private boolean trackingEnabled;
+
+    // Order details
+    private AssignedOrderDM orderDM;
+    private boolean hasAssignedOrder = false;
+    private int assignedOrderId = -1;
+
+    private List<LocationDM> favLocations;// = new ArrayList<Location>();
 
     // Initialized by the broadcast receiver
     private LocationDM currentReverseGeocodedLocation = null;
 
-    private Marker currentLocationMarker;
-    private Marker destinationLocationMarker;
     private Marker taxiLocationMarker;
-    private boolean trackingEnabled;
-
-    private List<LocationDM> favLocations;// = new ArrayList<Location>();
+    private Location taxiLocation;
 
     private Drawable addToLocationsDrawable;
     private Drawable searchDrawable;
-
-    // Order details
-    private AssignedOrderDM orderDM;
 
 
     // TRACKING SERVICES
@@ -156,11 +161,14 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                 currentLocationMarker = updateMarker(
                         currentLocationMarker,
                         latLng,
-                        markerTitle
+                        markerTitle,
+                        false
                 );
                 currentLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.person));
 
-                orderButton.setEnabled(true);
+                if(!hasAssignedOrder){
+                    toggleButton(ButtonType.Place);
+                }
 
             } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED)){
                 // Taxi location change
@@ -184,7 +192,8 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                 taxiLocationMarker = updateMarker(
                         taxiLocationMarker,
                         latLng,
-                        markerTitle
+                        markerTitle,
+                        false
                 );
                 taxiLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi));
             }
@@ -192,6 +201,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     };
 
 
+    // ACTIVITY LIFECYCLE
     /**
      * onCreate
      * @param savedInstanceState - the bundle
@@ -210,73 +220,11 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
         setUpMapIfNeeded();
 
-        getAssignedOrder();
-
     }
-
-
-    private void getAssignedOrder(){
-        int lastOrderId = UserPreferencesManager.getLastOrderId(context);
-        if(lastOrderId == -1){
-            // No stored order id!
-            return;
-        }
-        // Client was in active order status
-        RestClientManager.getOrder(lastOrderId, context, new Callback<AssignedOrderDM>() {
-            @Override
-            public void success(AssignedOrderDM assignedOrderDM, Response response) {
-                orderButton.setText(getResources().getString(R.string.cancel_order_txt));
-                orderButton.setEnabled(true);
-                int status  = response.getStatus();
-                if (status == HttpStatus.SC_OK){
-                    try {
-                        orderDM = assignedOrderDM;
-                        currentLocationMarker = updateMarker(
-                                currentLocationMarker,
-                                new LatLng(assignedOrderDM.orderLatitude, assignedOrderDM.orderLongitude),
-                                assignedOrderDM.orderAddress);
-                        if(!assignedOrderDM.destinationAddress.isEmpty()){
-                            destinationLocationMarker = updateMarker(destinationLocationMarker,
-                                    new LatLng(assignedOrderDM.destinationLatitude, assignedOrderDM.destinationLongitude),
-                                    assignedOrderDM.destinationAddress);
-                        }
-
-                        if(orderDM.taxiId == -1){
-                            // No taxi assigned yet
-
-                        }
-                    } catch (IllegalStateException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                if(status == HttpStatus.SC_NOT_FOUND){
-                    // Clear stored order id
-                    clearStoredOrder();
-                }
-
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-                // Clear stored order id
-                clearStoredOrder();
-            }
-        });
-    }
-
-    private void clearStoredOrder() {
-        UserPreferencesManager.storeOrderId(-1, context);
-        orderDM = null;
-        orderButton.setText(getResources().getString(R.string.confirm_order_txt));
-        orderButton.setEnabled(true);
-    }
-
 
     @Override
     protected void onStart(){
         super.onStart();
-
     }
 
     @Override
@@ -285,10 +233,20 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         setUpMapIfNeeded();
 
         trackingEnabled = UserPreferencesManager.getTrackingState(context);
+        hasAssignedOrder = UserPreferencesManager.hasAssignedOrder(context);
+        if(hasAssignedOrder) {
+            assignedOrderId = UserPreferencesManager.getLastOrderId(context);
+            getAssignedOrder();
+        }
+
+        if(hasAssignedOrder) {
+            toggleButton(ButtonType.Cancel);
+        } else {
+            toggleButton(ButtonType.Place);
+        }
 
         // Start location service
         Intent locationService = new Intent(OrderMap.this, LocationService.class);
-
         locationService.putExtra(Constants.LOCATION_REPORT_TITLE, phoneNumber);
         context.startService(locationService);
 
@@ -306,18 +264,9 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     @Override
     protected void onPause() {
         super.onPause();
-        //Stop location service
-        Intent locationService = new Intent(OrderMap.this, LocationService.class);
-        stopService(locationService);
 
-        // Stop tracking service
-        Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
-        stopService(trackingService);
-
-        unregisterReceiver(locationReceiver);
 
     }
-
 
     @Override
     public void onStop(){
@@ -328,9 +277,116 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     @Override
     public void onDestroy() {
         super.onDestroy();
-        //unregisterReceiver(locationReceiver);
+
+        //Stop location service
+        Intent locationService = new Intent(OrderMap.this, LocationService.class);
+        stopService(locationService);
+
+        // Stop tracking service
+        Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
+        stopService(trackingService);
+
+        unregisterReceiver(locationReceiver);
     }
 
+
+    // BUSINESS LOGIC
+    private void getAssignedOrder(){
+
+        if(!hasAssignedOrder){
+            toggleButton(ButtonType.Place);
+            return;
+        }
+
+        // Client was in active order status
+        showProgress(true);
+        RestClientManager.getOrder(assignedOrderId, context, new Callback<AssignedOrderDM>() {
+            @Override
+            public void success(AssignedOrderDM assignedOrderDM, Response response) {
+                toggleButton(ButtonType.Cancel);
+                int status = response.getStatus();
+                if (status == HttpStatus.SC_OK) {
+                    try {
+                        orderDM = assignedOrderDM;
+                        currentLocationMarker = updateMarker(
+                                currentLocationMarker,
+                                new LatLng(assignedOrderDM.orderLatitude, assignedOrderDM.orderLongitude),
+                                assignedOrderDM.orderAddress,
+                                true
+                        );
+                        if (!assignedOrderDM.destinationAddress.isEmpty()) {
+                            destinationLocationMarker = updateMarker(destinationLocationMarker,
+                                    new LatLng(assignedOrderDM.destinationLatitude, assignedOrderDM.destinationLongitude),
+                                    assignedOrderDM.destinationAddress,
+                                    false
+                            );
+                        }
+
+
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                    } finally {
+                        showProgress(false);
+                    }
+                }
+
+                if (status == HttpStatus.SC_NOT_FOUND) {
+                    // Clear stored order id
+                    clearStoredOrder();
+                    showProgress(false);
+                }
+
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+
+                if (error.getBody() != null) {
+                    Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                }
+                // Clear stored order id
+                clearStoredOrder();
+                showProgress(false);
+            }
+        });
+    }
+
+    private void clearStoredOrder() {
+        UserPreferencesManager.clearOrder(context);
+        hasAssignedOrder = false;
+        assignedOrderId = -1;
+        orderDM = null;
+        toggleButton(ButtonType.Place);
+    }
+
+    private ClientOrderDM getClientOrderDM() {
+        ClientOrderDM clientOrder = new ClientOrderDM();
+        clientOrder.orderLatitude = currentReverseGeocodedLocation.latitude;
+        clientOrder.orderLongitude = currentReverseGeocodedLocation.longitude;
+        clientOrder.orderAddress = startAddressEditText.getText().toString();
+        clientOrder.destinationAddress = destinationAddressEditText.getText().toString();
+        clientOrder.destinationLatitude = destinationLocationMarker.getPosition().latitude;
+        clientOrder.destinationLongitude = destinationLocationMarker.getPosition().longitude;
+        return clientOrder;
+    }
+
+    private AssignedOrderDM fromClientOrderDM(ClientOrderDM clientOrder) {
+        AssignedOrderDM order = new AssignedOrderDM();
+        order.orderId = clientOrder.orderId;
+        order.orderAddress = clientOrder.orderAddress;
+        order.orderLatitude = clientOrder.orderLatitude;
+        order.orderLongitude = clientOrder.orderLongitude;
+        order.destinationAddress = clientOrder.destinationAddress;
+        order.destinationLatitude = clientOrder.destinationLatitude;
+        order.destinationLongitude = clientOrder.destinationLongitude;
+        order.userComment = clientOrder.userComment;
+        order.taxiId = -1;
+        return  order;
+    }
+
+    // USER INTERFACE
     private void initInputs() {
         // Hide addresses inputs
         startGroup = (RelativeLayout) this.findViewById(R.id.startGroup);
@@ -365,7 +421,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             @Override
             public void onClick(View v) {
                 String destinationAddress = destinationAddressEditText.getText().toString();
-                if(!destinationAddress.isEmpty()){
+                if (!destinationAddress.isEmpty()) {
                     initiateGeocode(destinationAddress, Constants.DESTINATION_TAG);
                 }
             }
@@ -375,26 +431,22 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                 .findFragmentById(R.id.addressesInputs_fragment);
         getFragmentManager().beginTransaction().hide(locationsInputs).commit();
 
-        orderButton = (Button)findViewById(R.id.btn_confirm_location);
-        orderButton.setEnabled(false);
-
-        // Place Order and get it with the order's id
-        orderButton.setOnClickListener(new View.OnClickListener() {
+        cancelOrderButton = (Button)findViewById(R.id.btn_cancel_order);
+        cancelOrderButton.setEnabled(false);
+        cancelOrderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                orderButton.setEnabled(false);
-                if (!trackingEnabled) {
+                cancelOrderButton.setEnabled(false);
+                if (trackingEnabled) {
                     // Stop location service
                     Intent stopLocationServiceIntent = new Intent(OrderMap.this, LocationService.class);
                     context.stopService(stopLocationServiceIntent);
                 }
-
                 showProgress(true);
 
-                int lastOrderId = UserPreferencesManager.getLastOrderId(context);
-                if(lastOrderId != -1){
+                if(hasAssignedOrder){
                     // Order in progress, try to cancel it
-                    RestClientManager.cancelOrder(lastOrderId, context, new Callback<ClientOrderDM>() {
+                    RestClientManager.cancelOrder(assignedOrderId, context, new Callback<ClientOrderDM>() {
                         @Override
                         public void success(ClientOrderDM clientOrderDM, Response response) {
                             showProgress(false);
@@ -402,7 +454,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                             clearStoredOrder();
                             if (status == HttpStatus.SC_OK) {
                                 // Cancelled successfully
-                                Toast.makeText(context,  getResources().getString(R.string.order_cancelled_toast), Toast.LENGTH_LONG).show();
+                                Toast.makeText(context, getResources().getString(R.string.order_cancelled_toast), Toast.LENGTH_LONG).show();
                                 return;
                             }
 
@@ -419,12 +471,32 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                         @Override
                         public void failure(RetrofitError error) {
                             showProgress(false);
-                            orderButton.setText( getResources().getString(R.string.cancel_order_txt));
-                            orderButton.setEnabled(true);
+                            placeOrderButton.setEnabled(true);
+                            toggleButton(ButtonType.Cancel);
+                            if(error.getBody() != null) {
+                                Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                            }
                         }
                     });
                 }
+            }
+        });
 
+        placeOrderButton = (Button)findViewById(R.id.btn_place_order);
+        placeOrderButton.setEnabled(false);
+        placeOrderButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                placeOrderButton.setEnabled(false);
+                if (trackingEnabled) {
+                    // Stop location service
+                    Intent stopLocationServiceIntent = new Intent(OrderMap.this, LocationService.class);
+                    context.stopService(stopLocationServiceIntent);
+                }
+
+                showProgress(true);
 
                 // No order in progress, place new order
                 ClientOrderDM clientOrder = getClientOrderDM();
@@ -439,9 +511,10 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                             try {
                                 orderDM = fromClientOrderDM(clientOrder);
                                 UserPreferencesManager.storeOrderId(clientOrder.orderId, context);
+                                hasAssignedOrder = true;
+                                assignedOrderId = clientOrder.orderId;
                                 initiateTracking(clientOrder.orderId);
-                                orderButton.setText(getResources().getString(R.string.cancel_order_txt));
-                                orderButton.setEnabled(true);
+                                toggleButton(ButtonType.Cancel);
                             } catch (IllegalStateException e) {
                                 e.printStackTrace();
                             }
@@ -455,40 +528,61 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                     @Override
                     public void failure(RetrofitError error) {
                         showProgress(false);
-                        Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
-                        orderButton.setText(getResources().getString(R.string.confirm_order_txt));
-                        orderButton.setEnabled(true);
+                        if(error.getBody() != null) {
+                            Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                        toggleButton(ButtonType.Place);
                     }
                 });
             }
         });
     }
 
-    private ClientOrderDM getClientOrderDM() {
-        ClientOrderDM clientOrder = new ClientOrderDM();
-        clientOrder.orderLatitude = currentReverseGeocodedLocation.latitude;
-        clientOrder.orderLongitude = currentReverseGeocodedLocation.longitude;
-        clientOrder.orderAddress = startAddressEditText.getText().toString();
-        clientOrder.destinationAddress = destinationAddressEditText.getText().toString();
-        clientOrder.destinationLatitude = destinationLocationMarker.getPosition().latitude;
-        clientOrder.destinationLongitude = destinationLocationMarker.getPosition().longitude;
-        return clientOrder;
+    public enum ButtonType {
+        Place, Cancel
     }
 
-    private AssignedOrderDM fromClientOrderDM(ClientOrderDM clientOrder) {
-        AssignedOrderDM order = new AssignedOrderDM();
-        order.orderId = clientOrder.orderId;
-        order.orderAddress = clientOrder.orderAddress;
-        order.orderLatitude = clientOrder.orderLatitude;
-        order.orderLongitude = clientOrder.orderLongitude;
-        order.destinationAddress = clientOrder.destinationAddress;
-        order.destinationLatitude = clientOrder.destinationLatitude;
-        order.destinationLongitude = clientOrder.destinationLongitude;
-        order.userComment = clientOrder.userComment;
-        order.taxiId = -1;
-        return  order;
+    private void toggleButton(ButtonType button){
+        if(button == ButtonType.Cancel){ // Cancel Order
+            cancelOrderButton.setVisibility(View.VISIBLE);
+            cancelOrderButton.setEnabled(true);
+            placeOrderButton.setVisibility(View.INVISIBLE);
+            placeOrderButton.setEnabled(false);
+        } else if (button == ButtonType.Place) { // Place Order
+            cancelOrderButton.setVisibility(View.INVISIBLE);
+            cancelOrderButton.setEnabled(false);
+            placeOrderButton.setVisibility(View.VISIBLE);
+            placeOrderButton.setEnabled(true);
+        }
     }
 
+    /**
+     * Shows the ordering progress UI
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+    public void showProgress(final boolean show) {
+        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
+        // for very easy animations. If available, use these APIs to fade-in
+        // the progress spinner.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+
+            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            mProgressView.animate().setDuration(shortAnimTime).alpha(
+                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+                }
+            });
+        } else {
+            // The ViewPropertyAnimator APIs are not available, so simply show
+            // and hide the relevant UI components.
+            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+    }
 
     // OPTIONS MENU
     @Override
@@ -502,7 +596,6 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         }
         return true;
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -529,6 +622,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         return super.onOptionsItemSelected(item);
     }
 
+    // LOCATIONS DIALOG
     private boolean ChooseLocationDialog(int id) {
         if (id == R.id.enter_custom_locations) {
             FragmentManager fm = this.getFragmentManager();
@@ -594,6 +688,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
     }
 
+    // GOOGLE MAP AND MARKERS
     /**
      * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
      * installed) and the map has not already been instantiated.. This will ensure that we only ever
@@ -643,6 +738,11 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             @Override
             public void failure(RetrofitError error) {
                 Log.d(TAG, "ERROR_GETTING_LOCATIONS");
+                if (error.getBody() != null) {
+                    Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                }
             }
         });
     }
@@ -684,17 +784,18 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         });
     }
 
-    private Marker updateMarker(Marker marker, LatLng location, String title ){
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
+    private Marker updateMarker(Marker marker, LatLng location, String title, boolean animateEnabled ){
+        if(animateEnabled) {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
 
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(location)      // Sets the center of the map to location user
-                .zoom(17)                   // Sets the zoom
-                        //   .bearing(90)   // Sets the orientation of the camera to east
-                        //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
-                .build();                   // Creates a CameraPosition from the builder
-        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(location)      // Sets the center of the map to location user
+                    .zoom(17)                   // Sets the zoom
+                            //   .bearing(90)   // Sets the orientation of the camera to east
+                            //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
+                    .build();                   // Creates a CameraPosition from the builder
+            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        }
         if (marker == null){
 
             MarkerOptions markerOpts = new MarkerOptions()
@@ -731,7 +832,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
     /**
      * Initiates reverse geocode of a location (get the location's address)
      * Uses Geocode Service
-     * @param location
+     * @param location the location whose address will be resolved
      */
     protected void initiateReverseGeocode(Location location, int tag) {
         Intent intent = new Intent(this, GeocodeIntentService.class);
@@ -741,7 +842,6 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
         intent.putExtra(Constants.GEOCODE_TAG, tag);
         startService(intent);
     }
-
 
     /**
      * Receive Geocode result from Geocode Service
@@ -756,9 +856,6 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
             // or an error message sent from the intent service.
 
             int addressTag = resultData.getInt(Constants.GEOCODE_TAG);
-            Log.d("ADDRESS_TAG", ""+addressTag);
-            Log.d("ADDRESS TAG", addressTag == Constants.START_TAG ? "yes":"no");
-            Log.d("ADDRESS TAG", addressTag == Constants.DESTINATION_TAG ? "yes":"no");
             int geocodeType = resultData.getInt(Constants.GEOCODE_TYPE);
             if (resultCode == Constants.SUCCESS_RESULT) {
                 // A location's address was received
@@ -773,7 +870,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                     if (addressTag == Constants.DESTINATION_TAG) {
                         destinationAddressEditText.setText(resultAddress);
                         LatLng latLng = destinationLocationMarker.getPosition();
-                        updateMarker(destinationLocationMarker, latLng, resultAddress);
+                        updateMarker(destinationLocationMarker, latLng, resultAddress, true);
                     }
 
                     if (addressTag == Constants.START_TAG) {
@@ -792,7 +889,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
                         //Update marker
                         LatLng latLng = currentLocationMarker.getPosition();
-                        updateMarker(currentLocationMarker, latLng,resultAddress);
+                        updateMarker(currentLocationMarker, latLng,resultAddress, true);
 
                         //Update model
                         if(currentReverseGeocodedLocation == null){
@@ -804,7 +901,7 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                             currentReverseGeocodedLocation.title = addressLines[0];
 
                             // Enable ordering input
-                            orderButton.setEnabled(true);
+                            toggleButton(ButtonType.Place);
 
                             // Resolve address only once
                             if(trackingEnabled) {
@@ -823,6 +920,11 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                                     @Override
                                     public void failure(RetrofitError error) {
                                         Log.d(TAG, "ERROR_UPDATING_LOCATION");
+                                        if(error.getBody() != null) {
+                                            Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                                        } else {
+                                            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                                        }
                                     }
                                 });
                             }
@@ -847,14 +949,14 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
                     if (addressTag == Constants.DESTINATION_TAG) {
                         destinationLocationMarker =
-                                updateMarker(destinationLocationMarker,location,resolvedAddress);
+                                updateMarker(destinationLocationMarker,location,resolvedAddress, true);
                         destinationAddressEditText.setText(resolvedAddress);
                         destinationLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.destination));
                     }
 
                     if (addressTag == Constants.START_TAG) {
                         currentLocationMarker =
-                                updateMarker(currentLocationMarker,location,resolvedAddress);
+                                updateMarker(currentLocationMarker,location,resolvedAddress, true);
                         startAddressEditText.setText(resolvedAddress);
                     }
 
@@ -879,32 +981,6 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
                 }
             }
 
-        }
-    }
-
-    /**
-     * Shows the ordering progress UI
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    public void showProgress(final boolean show) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mProgressView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
         }
     }
 

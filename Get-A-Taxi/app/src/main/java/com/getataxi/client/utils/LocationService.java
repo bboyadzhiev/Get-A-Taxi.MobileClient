@@ -29,8 +29,6 @@ public class LocationService extends Service
     public Location previousBestLocation = null;
 
     private String reportLocationTitle;
-    //double latitude;
-    //double longitude;
 
     Intent broadcastIntent;
 
@@ -39,6 +37,19 @@ public class LocationService extends Service
     {
         super.onCreate();
         broadcastIntent = new Intent(Constants.LOCATION_UPDATED);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        listener = new ClientLocationListener();
+//        locationManager.requestLocationUpdates(
+//                LocationManager.NETWORK_PROVIDER,
+//                Constants.LOCATION_UPDATE_INTERVAL,
+//                Constants.LOCATION_UPDATE_DISTANCE,
+//                listener);
+        locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                Constants.LOCATION_UPDATE_INTERVAL,
+                Constants.LOCATION_UPDATE_DISTANCE,
+                listener);
     }
 
     @Override
@@ -54,18 +65,6 @@ public class LocationService extends Service
         Bundle b = intent.getExtras();
         reportLocationTitle = b.getString(Constants.LOCATION_REPORT_TITLE, "Unknown");
 
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        listener = new ClientLocationListener();
-//        locationManager.requestLocationUpdates(
-//                LocationManager.NETWORK_PROVIDER,
-//                Constants.LOCATION_UPDATE_INTERVAL,
-//                Constants.LOCATION_UPDATE_DISTANCE,
-//                listener);
-        locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                Constants.LOCATION_UPDATE_INTERVAL,
-                Constants.LOCATION_UPDATE_DISTANCE,
-                listener);
         return Service.START_NOT_STICKY;
     }
 
@@ -107,12 +106,14 @@ public class LocationService extends Service
                 currentBestLocation.getProvider());
 
         // Determine location quality using a combination of timeliness and accuracy
-        if (isMoreAccurate) {
+        if(isNewer && isMoreAccurate) {
+            return true;
+        } else if (isMoreAccurate) {
             return true;
         } else if (isNewer && !isLessAccurate) {
-            return true;
+            return false;
         } else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {
-            return true;
+            return false;
         }
         return false;
     }
@@ -159,9 +160,6 @@ public class LocationService extends Service
 
                 // Notify all interested parties
                 sendBroadcast(broadcastIntent);
-//                if(reportLocationEnabled){
-//                    updateUserLocationRest(loc);
-//                }
             }
         }
 

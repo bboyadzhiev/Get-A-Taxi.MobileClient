@@ -89,15 +89,12 @@ public class StartupActivity extends Activity {
         if(UserPreferencesManager.checkForLoginCredentials(context)){
             LoginUserDM loginUserDM = UserPreferencesManager.getLoginData(context);
             // Check if still logged-in
-            if(UserPreferencesManager.isLoggedIn(context) && !UserPreferencesManager.tokenHasExpired(loginUserDM)){
+            if(UserPreferencesManager.isLoggedIn(context) && !UserPreferencesManager.tokenHasExpired(loginUserDM.expires)){
                 Intent orderMap = new Intent(context, OrderMap.class);
                 orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(orderMap);
             }else{
                 String grantType = "password";
-//                RestClientManager manager = new RestClientManager(context);
-//                manager.login(loginUserDM, grantType);
-        //        RestClientManager.login(loginUserDM, grantType, context); // static
 
                 RestClientManager.login(loginUserDM, grantType, new Callback<LoginUserDM>() {
                     @Override
@@ -123,8 +120,11 @@ public class StartupActivity extends Activity {
 
                     @Override
                     public void failure(RetrofitError error) {
-                        String errorJson = new String(((TypedByteArray) error.getResponse().getBody()).getBytes());
-                        Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
+                        if(error.getBody() != null) {
+                            Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
 

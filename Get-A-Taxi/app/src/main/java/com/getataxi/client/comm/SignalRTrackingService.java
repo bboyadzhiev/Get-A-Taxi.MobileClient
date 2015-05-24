@@ -58,7 +58,7 @@ public class SignalRTrackingService extends Service {
             return -1;
         }
 
-        String server = Constants.BASE_URL + Constants.HUB_ENDPOINT;
+        String server = RestClientManager.base_url + Constants.HUB_ENDPOINT;
 
         Logger l  = new Logger() {
             @Override

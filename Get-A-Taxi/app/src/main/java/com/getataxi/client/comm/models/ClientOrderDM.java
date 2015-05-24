@@ -28,7 +28,7 @@ public class ClientOrderDM {
     @SerializedName("endLng")
     public double destinationLongitude;
 
-    @SerializedName("endLng")
+    @SerializedName("end")
     public String destinationAddress;
 
     @SerializedName("custComment")

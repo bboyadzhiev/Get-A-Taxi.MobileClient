@@ -11,7 +11,7 @@ import org.parceler.Parcel;
 public class TaxiDetailsDM {
 
     @SerializedName("taxiId")
-    public int TaxiId;
+    public int taxiId;
 
     @SerializedName("lat")
     public double latitude;

@@ -7,8 +7,6 @@
     android:layout_height="fill_parent"
     android:gravity="bottom" >
 
-
-
     <!-- Google Maps Fragment -->
     <fragment
         android:id="@+id/map"
@@ -16,32 +14,47 @@
         android:layout_height="match_parent"
         android:name="com.google.android.gms.maps.SupportMapFragment" />
 
-    <!-- Progress Bar -->
-    <ProgressBar
-        android:id="@+id/order_map_progress"
-        style="?android:attr/progressBarStyleLarge"
+    <!-- Order buttons -->
+    <Button
+        android:id="@+id/btn_cancel_order"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:visibility="gone" />
-
-    <!-- Send GPS data button -->
+        android:text="@string/cancel_order_txt" />
     <Button
-        android:id="@+id/btn_confirm_location"
+        android:id="@+id/btn_place_order"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:text="@string/confirm_order_txt" />
 
-    <!-- Google Maps Fragment -->
+
     <fragment
         android:id="@+id/addressesInputs_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/btn_confirm_location"
+        android:layout_above="@id/btn_cancel_order"
         android:name="com.getataxi.client.AddressesInputsFragment" />
 
+    <RelativeLayout
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:gravity="center"
+        android:layout_centerInParent="true"
+        android:id="@+id/progressbar" >
+
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/order_map_progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:visibility="gone" />
+
+    </RelativeLayout>
 </RelativeLayout>

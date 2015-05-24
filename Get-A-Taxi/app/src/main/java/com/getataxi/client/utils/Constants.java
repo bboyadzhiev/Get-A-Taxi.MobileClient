@@ -9,7 +9,11 @@ public final class Constants {
     public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
 
     // COMMUNICATIONS
-    public static final String BASE_URL = "http://get-a-taxi.apphb.com";
+    // COMMUNICATIONS
+    //public static final String DEFAULT_URL = "http://get-a-taxi.apphb.com";
+    public static final String DEFAULT_URL = "http://192.168.50.112:14938";
+    public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
+
     public static final String HUB_ENDPOINT = "/signalr";
     public static final String HUB_PROXY = "trackingHub";
     public static final String HUB_CONNECT = "Open";
@@ -73,6 +77,10 @@ public final class Constants {
     public static final String IS_IN_ORDER = "isInOrder";
     public static final String LAST_ORDER_ID = PACKAGE_NAME + ".lastOrderId";
     public static final String TRACKING_ENABLED = PACKAGE_NAME + "trackingEnabled";
+
+    public static final String ASSIGNED_TAXI =  PACKAGE_NAME + ".ASSIGNED_TAXI";
+    public static final String ASSIGNED_TAXI_ID =  PACKAGE_NAME + ".ASSIGNED_TAXI_ID";
+
 
     // UI - no UI strings should be here!
 

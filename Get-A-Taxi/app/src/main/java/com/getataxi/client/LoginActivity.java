@@ -3,10 +3,12 @@ package com.getataxi.client;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.res.Resources;
@@ -20,6 +22,7 @@ import android.provider.ContactsContract;
 import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,6 +35,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.getataxi.client.comm.RestClient;
 import com.getataxi.client.comm.RestClientManager;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.utils.UserPreferencesManager;
@@ -51,7 +55,6 @@ import retrofit.client.Response;
  * A login screen that offers login via email/password.
  */
 public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<Cursor> {
-
 
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
@@ -106,6 +109,13 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        RestClientManager.client = new RestClient(UserPreferencesManager.getBaseUrl(context));
     }
 
     @Override
@@ -127,7 +137,36 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
             finish();
         }
 
+        if(id == R.id.action_change_server){
+            changeBaseServerURL();
+        }
+
         return super.onOptionsItemSelected(item);
+    }
+
+    private void changeBaseServerURL(){
+        AlertDialog.Builder alert= new AlertDialog.Builder(this);
+        final LayoutInflater inflater= getLayoutInflater();
+        final View myView= inflater.inflate(R.layout.dialog_base_url, null);
+        alert.setTitle(R.string.dialog_base_url_title);
+        alert.setMessage(R.string.enter_base_url);
+
+        alert.setView(myView);
+        EditText input = (EditText) myView.findViewById(R.id.base_server_edit_text);
+        input.setText(UserPreferencesManager.getBaseUrl(context));
+        alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                EditText inp = (EditText) myView.findViewById(R.id.base_server_edit_text);
+                String base_url = inp.getText().toString();
+                UserPreferencesManager.setBaseUrl(context, base_url);
+                RestClientManager.client = new RestClient(UserPreferencesManager.getBaseUrl(context));
+            }
+        });
+        //AlertDialog sad= builder.create();
+        alert.create().show();
+
     }
 
     private void gotoRegister(){
@@ -228,10 +267,11 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
                 @Override
                 public void failure(RetrofitError error) {
                     showProgress(false);
-                    Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
-//                    String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-//                    Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
-
+                    if(error.getBody() != null) {
+                        Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 }
             });
 
@@ -361,7 +401,12 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
             try {
                // manager.login(this.mEmail, this.mPassword);
               //  Thread.sleep(2000);
-            } catch (RetrofitError e) {
+            } catch (RetrofitError error) {
+                if(error.getBody() != null) {
+                    Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                }
                 return false;
             }
 
