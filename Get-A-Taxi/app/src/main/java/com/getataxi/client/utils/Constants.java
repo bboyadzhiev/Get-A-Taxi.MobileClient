@@ -55,7 +55,7 @@ public final class Constants {
     public static final String LOCATION_UPDATED = PACKAGE_NAME + "LOCATION_UPDATED";
     public static final String LOCATION = PACKAGE_NAME + ".LOCATION";
     public static final String LOCATION_ACCURACY = PACKAGE_NAME + ".LOCATION_ACCURACY";
-    public static final double LOCATION_ACCURACY_THRESHOLD = 20; // meters
+    public static final float LOCATION_ACCURACY_THRESHOLD = 30; // meters
     public static final String LOCATION_REPORT_TITLE = PACKAGE_NAME + ".LOCATION_REPORT_TITLE";
 
 

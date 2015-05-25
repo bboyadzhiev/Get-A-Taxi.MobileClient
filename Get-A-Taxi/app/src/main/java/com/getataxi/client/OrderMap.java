@@ -96,6 +96,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     private GeocodeResultReceiver mResultReceiver;
 
     private Location clientLocation;
+    private float accuracy;
     private Marker currentLocationMarker;
     private Marker destinationLocationMarker;
     private boolean trackingEnabled;
@@ -120,6 +121,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     // TRACKING SERVICES
     protected void initiateTracking(int orderId){
         Intent trackingIntent = new Intent(OrderMap.this, SignalRTrackingService.class);
+        trackingIntent.putExtra(Constants.BASE_URL_STORAGE, UserPreferencesManager.getBaseUrl(context));
         trackingIntent.putExtra(Constants.LOCATION_REPORT_ENABLED, trackingEnabled);
         trackingIntent.putExtra(Constants.ORDER_ID, orderId);
         startService(trackingIntent);
@@ -140,13 +142,19 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 Bundle data = intent.getExtras();
 
                 clientLocation = data.getParcelable(Constants.LOCATION);
-                double threshold = data.getDouble(Constants.LOCATION_ACCURACY, 30);
+                accuracy = data.getFloat(Constants.LOCATION_ACCURACY, Constants.LOCATION_ACCURACY_THRESHOLD);
 
-                if(threshold < Constants.LOCATION_ACCURACY_THRESHOLD) {
+                if(accuracy < Constants.LOCATION_ACCURACY_THRESHOLD) {
                     // Reverse geocode for an address
                     initiateReverseGeocode(clientLocation, Constants.START_TAG);
+
                 }
 
+                Log.d("REPORTEDACURRACY", "REPORTEDACURRACY: "+accuracy);
+
+                if(!hasAssignedOrder){
+                    toggleButton(ButtonType.Place);
+                }
                 double clientLat = clientLocation.getLatitude();
                 double clientLon = clientLocation.getLongitude();
                 String markerTitle;
@@ -169,9 +177,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 );
                 currentLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.person));
 
-                if(!hasAssignedOrder){
-                    toggleButton(ButtonType.Place);
-                }
+
 
             } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED)){
                 // Taxi location change
@@ -218,7 +224,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         phoneNumber = tMgr.getLine1Number();
 
         mProgressView = findViewById(R.id.order_map_progress);
-
+        accuracy = Constants.LOCATION_ACCURACY_THRESHOLD;
         initInputs();
 
         setUpMapIfNeeded();
@@ -261,7 +267,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         registerReceiver(locationReceiver, filter);
 
         mResultReceiver = new GeocodeResultReceiver(new Handler());
-
+        Log.d("REPORTEDACURRACY", "ONRESUME");
     }
 
     @Override
@@ -311,6 +317,10 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 if (status == HttpStatus.SC_OK) {
                     try {
                         orderDM = assignedOrderDM;
+
+                        hasAssignedOrder = true;
+                        initiateTracking(assignedOrderId);
+
                         currentLocationMarker = updateMarker(
                                 currentLocationMarker,
                                 new LatLng(assignedOrderDM.orderLatitude, assignedOrderDM.orderLongitude),
@@ -352,11 +362,15 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     }
 
     private void showToastError(RetrofitError error) {
-        if (error.getResponse().getBody() != null) {
-            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-            if(!json.isEmpty()){
-                Toast.makeText(context, json, Toast.LENGTH_LONG).show();
-            } else {
+        if(error.getResponse() != null) {
+            if (error.getResponse().getBody() != null) {
+                String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+                if(!json.isEmpty()){
+                    Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }else {
                 Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
             }
         } else {
@@ -377,9 +391,11 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         clientOrder.orderLatitude = currentReverseGeocodedLocation.latitude;
         clientOrder.orderLongitude = currentReverseGeocodedLocation.longitude;
         clientOrder.orderAddress = startAddressEditText.getText().toString();
-        clientOrder.destinationAddress = destinationAddressEditText.getText().toString();
-        clientOrder.destinationLatitude = destinationLocationMarker.getPosition().latitude;
-        clientOrder.destinationLongitude = destinationLocationMarker.getPosition().longitude;
+        if(destinationAddressEditText.getText() != null) {
+            clientOrder.destinationAddress = destinationAddressEditText.getText().toString();
+            clientOrder.destinationLatitude = destinationLocationMarker.getPosition().latitude;
+            clientOrder.destinationLongitude = destinationLocationMarker.getPosition().longitude;
+        }
         return clientOrder;
     }
 
@@ -482,6 +498,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         @Override
                         public void failure(RetrofitError error) {
                             showProgress(false);
+                            clearStoredOrder();
                             placeOrderButton.setEnabled(true);
                             toggleButton(ButtonType.Cancel);
                             showToastError(error);
@@ -557,7 +574,14 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             cancelOrderButton.setVisibility(View.INVISIBLE);
             cancelOrderButton.setEnabled(false);
             placeOrderButton.setVisibility(View.VISIBLE);
-            placeOrderButton.setEnabled(true);
+
+            if(accuracy < Constants.LOCATION_ACCURACY_THRESHOLD) {
+                placeOrderButton.setEnabled(true);
+            } else {
+                placeOrderButton.setEnabled(false);
+            }
+
+
         }
     }
 
@@ -908,26 +932,26 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                             toggleButton(ButtonType.Place);
 
                             // Resolve address only once
-                            if(trackingEnabled) {
-                                // Update client's location in the system
-                                RestClientManager.updateClientLocation(currentReverseGeocodedLocation, context, new Callback<LocationDM>() {
-                                    @Override
-                                    public void success(LocationDM locationDM, Response response) {
-                                        int status = response.getStatus();
-                                        clearStoredOrder();
-                                        if (status == HttpStatus.SC_OK) {
-                                            LocationDM updatedLocation = locationDM;
-                                        }
-                                        Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
-                                    }
-
-                                    @Override
-                                    public void failure(RetrofitError error) {
-                                        Log.d(TAG, "ERROR_UPDATING_LOCATION");
-                                        showToastError(error);
-                                    }
-                                });
-                            }
+//                            if(trackingEnabled) {
+//                                // Update client's location in the system
+//                                RestClientManager.updateClientLocation(currentReverseGeocodedLocation, context, new Callback<LocationDM>() {
+//                                    @Override
+//                                    public void success(LocationDM locationDM, Response response) {
+//                                        int status = response.getStatus();
+//                                        clearStoredOrder();
+//                                        if (status == HttpStatus.SC_OK) {
+//                                            LocationDM updatedLocation = locationDM;
+//                                        }
+//                                        Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
+//                                    }
+//
+//                                    @Override
+//                                    public void failure(RetrofitError error) {
+//                                        Log.d(TAG, "ERROR_UPDATING_LOCATION");
+//                                        showToastError(error);
+//                                    }
+//                                });
+//                            }
                         }
                     }
                     // Show a toast message if an address was found.
