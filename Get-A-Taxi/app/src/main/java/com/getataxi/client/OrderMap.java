@@ -20,6 +20,7 @@ import android.os.Parcelable;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -66,7 +67,7 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class OrderMap extends FragmentActivity implements SelectLocationDialogListener {
+public class OrderMap extends ActionBarActivity implements SelectLocationDialogListener {
     public static final String TAG = "ORDER_MAP";
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
@@ -617,6 +618,10 @@ public class OrderMap extends FragmentActivity implements SelectLocationDialogLi
 
             UserPreferencesManager.setTrackingState(trackingEnabled, context);
             return true;
+        }
+
+        if(id == R.id.order_map_action_exit) {
+            finish();
         }
 
         return super.onOptionsItemSelected(item);
