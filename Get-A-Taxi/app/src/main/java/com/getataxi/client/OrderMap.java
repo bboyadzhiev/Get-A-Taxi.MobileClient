@@ -19,7 +19,6 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -42,7 +41,6 @@ import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment.SelectLocat
 import com.getataxi.client.comm.models.AssignedOrderDM;
 import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.LocationDM;
-import com.getataxi.client.comm.models.TaxiDetailsDM;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.GeocodeIntentService;
 import com.getataxi.client.utils.LocationService;
@@ -142,9 +140,9 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 Bundle data = intent.getExtras();
 
                 clientLocation = data.getParcelable(Constants.LOCATION);
-                double treshold = data.getDouble(Constants.LOCATION_ACCURACY, 30);
+                double threshold = data.getDouble(Constants.LOCATION_ACCURACY, 30);
 
-                if(treshold < Constants.LOCATION_ACCURACY_TRESHOLD) {
+                if(threshold < Constants.LOCATION_ACCURACY_THRESHOLD) {
                     // Reverse geocode for an address
                     initiateReverseGeocode(clientLocation, Constants.START_TAG);
                 }

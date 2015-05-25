@@ -9,5 +9,6 @@
     <string name="exit">Exit</string>
 
     <string name="login_success_message">Welcome, %1$s!</string>
+    <string name="tracking_started">Tracking started</string>
 
 </resources>

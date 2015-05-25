@@ -13,7 +13,7 @@
     <string name="enter_current_address">Enter current address</string>
     <string name="enter_destination_address">Enter destination address</string>
     <string name="address_found">Address located successfully!</string>
-    <string name="location_found">Location\'s address found!</string>
+    <string name="location_found">Your location was found!</string>
     <string name="service_not_available">Address fetching service unavailable!</string>
     <string name="invalid_lat_long_used">Invalid latitude and longitude values!</string>
     <string name="invalid_address_used">Address was not recognized!</string>

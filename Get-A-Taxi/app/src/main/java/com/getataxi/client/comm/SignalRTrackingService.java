@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.getataxi.client.R;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.UserPreferencesManager;
@@ -43,22 +44,23 @@ public class SignalRTrackingService extends Service {
         filter.addAction(Constants.LOCATION_UPDATED);
         registerReceiver(locationReceiver, filter);
 
-        broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED);
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        Toast.makeText(this, "SignalR Service Start", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.tracking_started), Toast.LENGTH_LONG).show();
 
         int orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
+        String baseUsrl = intent.getStringExtra(Constants.BASE_URL_STORAGE);
         reportLocationEnabled = intent.getBooleanExtra(Constants.LOCATION_REPORT_ENABLED, false);
 
         if(orderId == -1){
             return -1;
         }
 
-        String server = RestClientManager.base_url + Constants.HUB_ENDPOINT;
+        String server =  baseUsrl + Constants.HUB_ENDPOINT;
 
         Logger l  = new Logger() {
             @Override
@@ -105,6 +107,7 @@ public class SignalRTrackingService extends Service {
                 Location loc = new Location("void");
                 loc.setLatitude(lat);
                 loc.setLongitude(lon);
+                broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED);
                 broadcastIntent.putExtra(Constants.LOCATION, loc);
                 sendBroadcast(broadcastIntent);
             }
