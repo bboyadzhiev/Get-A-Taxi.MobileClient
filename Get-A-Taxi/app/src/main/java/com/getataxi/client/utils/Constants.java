@@ -11,7 +11,8 @@ public final class Constants {
     // COMMUNICATIONS
     // COMMUNICATIONS
     //public static final String DEFAULT_URL = "http://get-a-taxi.apphb.com";
-    public static final String DEFAULT_URL = "http://192.168.50.112:14938";
+    //public static final String DEFAULT_URL = "http://192.168.50.112:14938";
+    public static final String DEFAULT_URL = "http://172.16.250.145:14938";
     public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
 
     public static final String HUB_ENDPOINT = "/signalr";
@@ -53,6 +54,8 @@ public final class Constants {
     //LOCATION SERVICE
     public static final String LOCATION_UPDATED = PACKAGE_NAME + "LOCATION_UPDATED";
     public static final String LOCATION = PACKAGE_NAME + ".LOCATION";
+    public static final String LOCATION_ACCURACY = PACKAGE_NAME + ".LOCATION_ACCURACY";
+    public static final double LOCATION_ACCURACY_TRESHOLD = 20; // meters
     public static final String LOCATION_REPORT_TITLE = PACKAGE_NAME + ".LOCATION_REPORT_TITLE";
 
 

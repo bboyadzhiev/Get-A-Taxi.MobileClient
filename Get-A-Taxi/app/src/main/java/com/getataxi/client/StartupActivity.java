@@ -77,14 +77,8 @@ public class StartupActivity extends Activity {
         }
     }
 
+
     private void proceedWithStartup() {
-
-        try {
-            Log.e("DATE: ", UserPreferencesManager.tokenDateFormat.parse("Thu, 09 Apr 2015 20:48:26 GMT").toString());
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
         // Check for login credentials
         if(UserPreferencesManager.checkForLoginCredentials(context)){
             LoginUserDM loginUserDM = UserPreferencesManager.getLoginData(context);
@@ -120,11 +114,7 @@ public class StartupActivity extends Activity {
 
                     @Override
                     public void failure(RetrofitError error) {
-                        if(error.getBody() != null) {
-                            Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                        } else {
-                            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                        }
+                        showToastError(error);
                     }
                 });
 
@@ -145,6 +135,15 @@ public class StartupActivity extends Activity {
                 registerIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(registerIntent);
             }
+        }
+    }
+
+    private void showToastError(RetrofitError error) {
+        if (error.getResponse().getBody() != null) {
+            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+            Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 

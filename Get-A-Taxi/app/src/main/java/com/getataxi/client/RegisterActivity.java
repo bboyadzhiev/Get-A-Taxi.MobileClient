@@ -30,6 +30,7 @@ import org.apache.http.HttpStatus;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
+import retrofit.mime.TypedByteArray;
 
 
 public class RegisterActivity extends ActionBarActivity{
@@ -173,9 +174,22 @@ public class RegisterActivity extends ActionBarActivity{
                 @Override
                 public void failure(RetrofitError error) {
                     showProgress(false);
-                    Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
+                    showToastError(error);
                 }
             });
+        }
+    }
+
+    private void showToastError(RetrofitError error) {
+        if (error.getResponse().getBody() != null) {
+            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+            if(!json.isEmpty()){
+                Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 

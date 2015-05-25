@@ -66,6 +66,7 @@ import java.util.List;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
+import retrofit.mime.TypedByteArray;
 
 public class OrderMap extends ActionBarActivity implements SelectLocationDialogListener {
     public static final String TAG = "ORDER_MAP";
@@ -141,9 +142,12 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 Bundle data = intent.getExtras();
 
                 clientLocation = data.getParcelable(Constants.LOCATION);
+                double treshold = data.getDouble(Constants.LOCATION_ACCURACY, 30);
 
-                // Reverse geocode for an address
-                initiateReverseGeocode(clientLocation, Constants.START_TAG);
+                if(treshold < Constants.LOCATION_ACCURACY_TRESHOLD) {
+                    // Reverse geocode for an address
+                    initiateReverseGeocode(clientLocation, Constants.START_TAG);
+                }
 
                 double clientLat = clientLocation.getLatitude();
                 double clientLon = clientLocation.getLongitude();
@@ -341,17 +345,25 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
             @Override
             public void failure(RetrofitError error) {
-
-                if (error.getBody() != null) {
-                    Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                }
+                showToastError(error);
                 // Clear stored order id
                 clearStoredOrder();
                 showProgress(false);
             }
         });
+    }
+
+    private void showToastError(RetrofitError error) {
+        if (error.getResponse().getBody() != null) {
+            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+            if(!json.isEmpty()){
+                Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void clearStoredOrder() {
@@ -474,11 +486,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                             showProgress(false);
                             placeOrderButton.setEnabled(true);
                             toggleButton(ButtonType.Cancel);
-                            if(error.getBody() != null) {
-                                Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                            }
+                            showToastError(error);
                         }
                     });
                 }
@@ -529,11 +537,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                     @Override
                     public void failure(RetrofitError error) {
                         showProgress(false);
-                        if(error.getBody() != null) {
-                            Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                        } else {
-                            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                        }
+                        showToastError(error);
                         toggleButton(ButtonType.Place);
                     }
                 });
@@ -743,11 +747,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             @Override
             public void failure(RetrofitError error) {
                 Log.d(TAG, "ERROR_GETTING_LOCATIONS");
-                if (error.getBody() != null) {
-                    Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                }
+                showToastError(error);
             }
         });
     }
@@ -809,6 +809,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                     .title(title);
 
             marker = mMap.addMarker(markerOpts);
+            animateMarker(marker, location, false);
         } else {
             marker.setTitle(title);
             animateMarker(marker, location, false);
@@ -925,11 +926,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                                     @Override
                                     public void failure(RetrofitError error) {
                                         Log.d(TAG, "ERROR_UPDATING_LOCATION");
-                                        if(error.getBody() != null) {
-                                            Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                                        } else {
-                                            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                                        }
+                                        showToastError(error);
                                     }
                                 });
                             }
