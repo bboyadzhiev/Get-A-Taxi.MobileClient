@@ -23,6 +23,8 @@ public final class Constants {
     public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
     public static final String ORDER_ID = "ORDER_ID";
 
+    public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
+
     // Connection timeouts in milliseconds
     public static final int READ_TIMEOUT = 15000;
     public static final int CONNECT_TIMEOUT = 15000;

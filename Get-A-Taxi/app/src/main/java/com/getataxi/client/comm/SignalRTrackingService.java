@@ -111,7 +111,7 @@ public class SignalRTrackingService extends Service {
                 Location loc = new Location("void");
                 loc.setLatitude(lat);
                 loc.setLongitude(lon);
-                broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED);
+                broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED_BC);
                 broadcastIntent.putExtra(Constants.LOCATION, loc);
                 sendBroadcast(broadcastIntent);
             }
