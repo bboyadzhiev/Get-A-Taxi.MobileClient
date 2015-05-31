@@ -1,5 +1,8 @@
 package com.getataxi.client.comm;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,6 +14,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.getataxi.client.OrderMap;
 import com.getataxi.client.R;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.utils.Constants;
@@ -35,6 +39,11 @@ public class SignalRTrackingService extends Service {
     private Intent broadcastIntent;
     private HubProxy proxy;
     private boolean reportLocationEnabled = false;
+    Location taxiLocation;
+    Location myLocation;
+    boolean notificationHasBeenSent = false;
+    private static final int NOTIFY_ME_ID=1338;
+
     int orderId;
     @Override
     public void onCreate() {
@@ -108,12 +117,20 @@ public class SignalRTrackingService extends Service {
             @Override
             public void run(Double lat, Double lon) {
                 Log.d("TRACKINGSERVICE", "HUB_PEER_LOCATION_CHANGED");
-                Location loc = new Location("void");
-                loc.setLatitude(lat);
-                loc.setLongitude(lon);
+                taxiLocation = new Location("void");
+                taxiLocation.setLatitude(lat);
+                taxiLocation.setLongitude(lon);
+
+                if(!notificationHasBeenSent && taxiHasArrived()){
+                    broadcastIntent =  new Intent(Constants.TAXI_HAS_ARRIVED);
+                    sendOrderedBroadcast(broadcastIntent, null);
+
+                }
+
                 broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED_BC);
-                broadcastIntent.putExtra(Constants.LOCATION, loc);
+                broadcastIntent.putExtra(Constants.LOCATION, taxiLocation);
                 sendBroadcast(broadcastIntent);
+
             }
         }, Double.class, Double.class);
 
@@ -122,6 +139,18 @@ public class SignalRTrackingService extends Service {
         return Service.START_STICKY;
                 //--------------------------------------------------------------------------------
     }
+
+    private boolean taxiHasArrived(){
+        if (myLocation != null && taxiLocation != null) {
+            float distance = taxiLocation.distanceTo(myLocation);
+
+            if (distance <= Constants.ARRIVAL_DISTANCE_THRESHOLD) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -148,10 +177,10 @@ public class SignalRTrackingService extends Service {
                 }
                 Bundle data = intent.getExtras();
 
-                Location location = data.getParcelable(Constants.LOCATION);
+                myLocation = data.getParcelable(Constants.LOCATION);
 
-                double lat = location.getLatitude();
-                double lon = location.getLongitude();
+                double lat = myLocation.getLatitude();
+                double lon = myLocation.getLongitude();
 
                 if ( proxy != null && orderId != -1){
                     Log.d("TRACKINGSERVICE", "HUB_MY_LOCATION_CHANGED");

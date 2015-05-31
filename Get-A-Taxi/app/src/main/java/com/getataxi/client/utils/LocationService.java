@@ -111,7 +111,7 @@ public class LocationService extends Service
         } else if (isMoreAccurate) {
             return true;
         } else if (isNewer && !isLessAccurate) {
-            return false;
+            return true;
         } else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {
             return false;
         }

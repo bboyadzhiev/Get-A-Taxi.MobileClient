@@ -7,12 +7,14 @@ import android.widget.Toast;
 import com.getataxi.client.comm.contracts.ClientOrdersAPI;
 import com.getataxi.client.comm.contracts.LocationsAPI;
 import com.getataxi.client.comm.contracts.TaxiAPI;
+import com.getataxi.client.comm.contracts.TaxiStandsAPI;
 import com.getataxi.client.comm.models.AssignedOrderDM;
 import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
 import com.getataxi.client.comm.models.TaxiDetailsDM;
+import com.getataxi.client.comm.models.TaxiStandDM;
 import com.getataxi.client.models.Location;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.UserPreferencesManager;
@@ -45,6 +47,7 @@ public class RestClientManager {
     public RestClientManager(){
     }
 
+    // AUTHENTICATION
     private static List<NameValuePair> getAuthorisationHeaders(Context context){
         LoginUserDM loginData = UserPreferencesManager.getLoginData(context);
 
@@ -61,94 +64,6 @@ public class RestClientManager {
         }
         return headers;
     }
-
-//  private Context context;
-//
-//    public RestClientManager(Context ctx){
-//        this.context = ctx;
-//        this.client = new RestClient(BASE_URL);
-//    }
-//
-//
-//    Callback callback = new Callback() {
-//        @Override
-//        public void success(Object o, Response response) {
-//
-//        }
-//
-//        @Override
-//        public void failure(RetrofitError retrofitError) {
-//
-//        }
-//    };
-//
-//
-//    public void login(LoginUserDM loginUserDM, String grantType){
-//        Toast.makeText(context, "email:" + loginUserDM.email + " pass: " + loginUserDM.password, Toast.LENGTH_LONG).show();
-//
-//        this.client.getAccountService(null).login(loginUserDM.userName, loginUserDM.password, grantType,new Callback<LoginUserDM>(){
-//            @Override
-//            public void success(LoginUserDM loginUserDM, Response response) {
-//                int status  = response.getStatus();
-//                if (status == HttpStatus.SC_OK){
-//                    try {
-//                        Resources res = context.getResources();
-//                        String welcome = String.format(res.getString(R.string.login_success_message),
-//                                loginUserDM.userName);
-//                        Toast.makeText(context, welcome, Toast.LENGTH_LONG).show();
-//                        Thread.sleep(5000);
-//                        UserPreferencesManager.saveLoginData(loginUserDM, context);
-//
-//                        Toast.makeText(context, "Login data stored!", Toast.LENGTH_LONG).show();
-//                        Intent orderMap = new Intent(context, OrderMap.class);
-//                        orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                        context.startActivity(orderMap);
-//                    } catch (IllegalStateException e) {
-//                        e.printStackTrace();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                    catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public void failure(RetrofitError error) {
-//                String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-//                Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
-//
-//            }
-//        });
-//    }
-//
-//    public void register(final RegisterUserDM userDM){
-//      // this.client.getAccountService(getAuthorisationHeaders()).register(userDM, new Callback<LoginUserDM>() {
-//        this.client.getAccountService(null).register(userDM, new Callback<LoginUserDM>() {
-//            @Override
-//            public void success(LoginUserDM loginUserDM, Response response) {
-//                int status  = response.getStatus();
-//                if (status == HttpStatus.SC_OK){
-//                    try {
-//                        Toast.makeText(context, "Successfully registered", Toast.LENGTH_LONG).show();
-//                        UserPreferencesManager.saveUserData(userDM, context);
-//                        Intent login = new Intent(context, LoginActivity.class);
-//                        context.startActivity(login);
-//                    } catch (IllegalStateException e) {
-//                        e.printStackTrace();
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public void failure(RetrofitError error) {
-//                Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
-//            }
-//        });
-//    }
 
     public static void updateToken(LoginUserDM loginUserDM, String grantType, final Context context) {
         client.getAccountService(null).login(loginUserDM.email, loginUserDM.password, grantType,new Callback<LoginUserDM>(){
@@ -186,75 +101,7 @@ public class RestClientManager {
         client.getAccountService(null).register(registerUserDM, callback);
     }
 
-//    public static void login(LoginUserDM loginUserDM, String grantType, final Context context){
-//        Toast.makeText(context, "email:" + loginUserDM.userName + " pass: " + loginUserDM.password, Toast.LENGTH_LONG).show();
-//
-//        //   this.client.getAccountService(getAuthorisationHeaders()).login(loginUserDM.userName, loginUserDM.password, grantType,new Callback<LoginUserDM>(){
-//
-//       client.getAccountService(null).login(loginUserDM.email, loginUserDM.password, grantType,new Callback<LoginUserDM>(){
-//            @Override
-//            public void success(LoginUserDM loginUserDM, Response response) {
-//                int status  = response.getStatus();
-//                if (status == HttpStatus.SC_OK){
-//                    try {
-//                        Resources res = context.getResources();
-//                        String welcome = String.format(res.getString(R.string.login_success_message),
-//                                loginUserDM.userName);
-//                        Toast.makeText(context, welcome, Toast.LENGTH_LONG).show();
-//                        Thread.sleep(5000);
-//                        UserPreferencesManager.saveLoginData(loginUserDM, context);
-//
-//                        Toast.makeText(context, "Login data stored!", Toast.LENGTH_LONG).show();
-//                        Intent orderMap = new Intent(context, OrderMap.class);
-//                        orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                        context.startActivity(orderMap);
-//                    } catch (IllegalStateException e) {
-//                        e.printStackTrace();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                    catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public void failure(RetrofitError error) {
-//                String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-//                Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
-//
-//            }
-//        });
-//    }
-
-//    public static void register(final RegisterUserDM userDM, final Context context){
-//        client.getAccountService(null).register(userDM, new Callback<LoginUserDM>() {
-//            @Override
-//            public void success(LoginUserDM loginUserDM, Response response) {
-//                int status  = response.getStatus();
-//                if (status == HttpStatus.SC_OK){
-//                    try {
-//                        Toast.makeText(context, "Successfully registered", Toast.LENGTH_LONG).show();
-//                        UserPreferencesManager.saveUserData(userDM, context);
-//                        Intent login = new Intent(context, LoginActivity.class);
-//                        context.startActivity(login);
-//                    } catch (IllegalStateException e) {
-//                        e.printStackTrace();
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public void failure(RetrofitError error) {
-//                Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
-//            }
-//        });
-//    }
-
-    // Locations
+    // LOCATIONS
     public static void getLocations(Context context, Callback<List<LocationDM>> callback){
         List<NameValuePair> heads = new ArrayList<>();
         heads.addAll(getAuthorisationHeaders(context));
@@ -323,4 +170,11 @@ public class RestClientManager {
         taxiApi.getTaxiDetails(id, callback);
     }
 
+    // TAXI STANDS
+    public static void getTaxiStands(double lat, double lon, Context context, Callback<List<TaxiStandDM>> callback){
+        List<NameValuePair> heads = new ArrayList<>();
+        heads.addAll(getAuthorisationHeaders(context));
+        TaxiStandsAPI taxiStandsAPI = client.getTaxiStandsService(heads);
+        taxiStandsAPI.getTaxiStandsByLocation(lat, lon, callback);
+    }
 }

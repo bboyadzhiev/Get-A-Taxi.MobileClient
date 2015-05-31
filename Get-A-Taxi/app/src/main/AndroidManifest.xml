@@ -77,6 +77,11 @@
             android:name=".comm.SignalRTrackingService"
             android:exported="false"
             />
+        <receiver android:name=".utils.NotificationsReceiver">
+            <intent-filter>
+                <action android:name= "com.getataxi.mobiletaxi.utils.TAXI_HAS_ARRIVED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

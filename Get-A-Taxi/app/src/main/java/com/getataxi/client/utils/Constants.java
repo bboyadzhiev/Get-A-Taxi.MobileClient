@@ -11,8 +11,9 @@ public final class Constants {
     // COMMUNICATIONS
     // COMMUNICATIONS
     //public static final String DEFAULT_URL = "http://get-a-taxi.apphb.com";
-    //public static final String DEFAULT_URL = "http://192.168.50.112:14938";
-    public static final String DEFAULT_URL = "http://172.16.250.145:14938";
+    public static final String DEFAULT_URL = "http://192.168.50.112:14938";
+    //public static final String DEFAULT_URL = "http://172.16.250.145:14938";
+    //public static final String DEFAULT_URL = "http://192.168.43.245:14938";
     public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
 
     public static final String HUB_ENDPOINT = "/signalr";
@@ -85,6 +86,8 @@ public final class Constants {
 
     public static final String ASSIGNED_TAXI =  PACKAGE_NAME + ".ASSIGNED_TAXI";
     public static final String ASSIGNED_TAXI_ID =  PACKAGE_NAME + ".ASSIGNED_TAXI_ID";
+    public static final float ARRIVAL_DISTANCE_THRESHOLD = 50; // meters
+    public static final String TAXI_HAS_ARRIVED = PACKAGE_NAME + ".TAXI_HAS_ARRIVED" ;
 
 
     // UI - no UI strings should be here!

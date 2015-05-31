@@ -10,5 +10,7 @@
 
     <string name="login_success_message">Welcome, %1$s!</string>
     <string name="tracking_started">Tracking started</string>
+    <string name="taxi_has_arrived">Your taxi has arrived</string>
+    <string name="see_map">Open the map!</string>
 
 </resources>

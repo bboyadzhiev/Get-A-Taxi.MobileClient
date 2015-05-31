@@ -41,6 +41,7 @@ import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment.SelectLocat
 import com.getataxi.client.comm.models.AssignedOrderDM;
 import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.LocationDM;
+import com.getataxi.client.comm.models.TaxiStandDM;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.GeocodeIntentService;
 import com.getataxi.client.utils.LocationService;
@@ -108,6 +109,10 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
     private List<LocationDM> favLocations;// = new ArrayList<Location>();
 
+    // Taxi stands
+    private List<TaxiStandDM> taxiStandDMs;
+
+
     // Initialized by the broadcast receiver
     private LocationDM currentReverseGeocodedLocation = null;
 
@@ -147,6 +152,9 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 if(accuracy < Constants.LOCATION_ACCURACY_THRESHOLD) {
                     // Reverse geocode for an address
                     initiateReverseGeocode(clientLocation, Constants.START_TAG);
+                    if(taxiStandDMs.isEmpty()){
+                        updateTaxiStands(context);
+                    }
 
                 }
 
@@ -196,7 +204,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 Bundle data = intent.getExtras();
                 taxiLocation = data.getParcelable(Constants.LOCATION);
 
-                String markerTitle = orderDM.taxiPlate;
+                String markerTitle = orderDM.taxiPlate + " - " + orderDM.driverName;
                 LatLng latLng =  new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
                 taxiLocationMarker = updateMarker(
                         taxiLocationMarker,
@@ -208,6 +216,29 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             }
         }
     };
+
+    private void updateTaxiStands(Context context) {
+        RestClientManager.getTaxiStands(clientLocation.getLatitude(), clientLocation.getLongitude(), context, new Callback<List<TaxiStandDM>>() {
+            @Override
+            public void success(List<TaxiStandDM> taxiStands, Response response) {
+                taxiStandDMs.clear();
+                taxiStandDMs.addAll(taxiStands);
+                for(TaxiStandDM stand: taxiStands) {
+                    MarkerOptions markerOpts = new MarkerOptions()
+                            .position(new LatLng(stand.latitude, stand.longitude))
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.taxistand))
+                            .title(stand.alias);
+
+                  Marker marker = mMap.addMarker(markerOpts);
+                }
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+
+            }
+        });
+    }
 
 
     // ACTIVITY LIFECYCLE
@@ -228,7 +259,6 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         initInputs();
 
         setUpMapIfNeeded();
-
     }
 
     @Override
@@ -267,7 +297,11 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         registerReceiver(locationReceiver, filter);
 
         mResultReceiver = new GeocodeResultReceiver(new Handler());
-        Log.d("REPORTEDACURRACY", "ONRESUME");
+
+        if(taxiStandDMs == null){
+            taxiStandDMs = new ArrayList<TaxiStandDM>();
+        }
+
     }
 
     @Override

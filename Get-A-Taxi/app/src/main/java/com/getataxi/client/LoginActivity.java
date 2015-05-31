@@ -233,9 +233,6 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
             loginUserDM.email = email;
             loginUserDM.userName = email;
             loginUserDM.password = password;
-//            RestClientManager manager = new RestClientManager(getApplicationContext());
-//            manager.login(loginUserDM, grantType);
-//            RestClientManager.login(loginUserDM, grantType, context); // static
 
             RestClientManager.login(loginUserDM, grantType, new Callback<LoginUserDM>() {
                 @Override
@@ -250,7 +247,6 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
                             Thread.sleep(5000);
                             UserPreferencesManager.saveLoginData(responseLoginUserDM, context);
                             showProgress(false);
-                            Toast.makeText(context, "Login data stored!", Toast.LENGTH_LONG).show();
                             Intent orderMap = new Intent(context, OrderMap.class);
                             orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             context.startActivity(orderMap);
