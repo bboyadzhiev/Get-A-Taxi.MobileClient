@@ -150,12 +150,13 @@ public class SignalRTrackingService extends Service {
         }
         return false;
     }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
+        connection.stop();
         unregisterReceiver(locationReceiver);
     }
+
 
     @Override
     public IBinder onBind(Intent intent) {
