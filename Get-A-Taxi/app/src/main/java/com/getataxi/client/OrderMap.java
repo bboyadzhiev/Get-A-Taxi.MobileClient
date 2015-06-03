@@ -218,6 +218,10 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     };
 
     private void updateTaxiStands(Context context) {
+        LocationDM location = new LocationDM();
+        location.latitude = clientLocation.getLatitude();
+        location.longitude = clientLocation.getLongitude();
+
         RestClientManager.getTaxiStands(clientLocation.getLatitude(), clientLocation.getLongitude(), context, new Callback<List<TaxiStandDM>>() {
             @Override
             public void success(List<TaxiStandDM> taxiStands, Response response) {
