@@ -223,13 +223,13 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             public void success(List<TaxiStandDM> taxiStands, Response response) {
                 taxiStandDMs.clear();
                 taxiStandDMs.addAll(taxiStands);
-                for(TaxiStandDM stand: taxiStands) {
+                for (TaxiStandDM stand : taxiStands) {
                     MarkerOptions markerOpts = new MarkerOptions()
                             .position(new LatLng(stand.latitude, stand.longitude))
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.taxistand))
                             .title(stand.alias);
 
-                  Marker marker = mMap.addMarker(markerOpts);
+                    Marker marker = mMap.addMarker(markerOpts);
                 }
             }
 
@@ -532,8 +532,8 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         @Override
                         public void failure(RetrofitError error) {
                             showProgress(false);
-                            clearStoredOrder();
-                            placeOrderButton.setEnabled(true);
+                            //clearStoredOrder();
+                            //placeOrderButton.setEnabled(true);
                             toggleButton(ButtonType.Cancel);
                             showToastError(error);
                         }
@@ -543,7 +543,9 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         });
 
         placeOrderButton = (Button)findViewById(R.id.btn_place_order);
-        placeOrderButton.setEnabled(false);
+        if(clientLocation != null && !hasAssignedOrder) {
+            placeOrderButton.setEnabled(false);
+        }
         placeOrderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -947,7 +949,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         fm.beginTransaction()
                                 .setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out)
                                 .show(locationsInputs)
-                                .commit();
+                                .commitAllowingStateLoss();
 
                         //Update marker
                         LatLng latLng = currentLocationMarker.getPosition();

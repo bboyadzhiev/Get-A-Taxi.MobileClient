@@ -15,10 +15,8 @@ import com.getataxi.client.comm.models.ClientOrderDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
 import com.getataxi.client.comm.models.TaxiDetailsDM;
 import com.getataxi.client.comm.models.TaxiStandDM;
-import com.getataxi.client.models.Location;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.UserPreferencesManager;
-import com.squareup.okhttp.Call;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
