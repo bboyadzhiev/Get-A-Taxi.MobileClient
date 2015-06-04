@@ -8,10 +8,10 @@ import com.getataxi.client.comm.contracts.ClientOrdersAPI;
 import com.getataxi.client.comm.contracts.LocationsAPI;
 import com.getataxi.client.comm.contracts.TaxiAPI;
 import com.getataxi.client.comm.contracts.TaxiStandsAPI;
-import com.getataxi.client.comm.models.AssignedOrderDM;
+import com.getataxi.client.comm.models.OrderDetailsDM;
 import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.comm.models.LoginUserDM;
-import com.getataxi.client.comm.models.ClientOrderDM;
+import com.getataxi.client.comm.models.OrderDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
 import com.getataxi.client.comm.models.TaxiDetailsDM;
 import com.getataxi.client.comm.models.TaxiStandDM;
@@ -132,28 +132,28 @@ public class RestClientManager {
     }
 
     // Orders
-    public static void addOrder(ClientOrderDM order, Context context, Callback<ClientOrderDM> callback){
+    public static void addOrder(OrderDM order, Context context, Callback<OrderDM> callback){
         List<NameValuePair> heads = new ArrayList<>();
         heads.addAll(getAuthorisationHeaders(context));
         ClientOrdersAPI ordersAPI = client.getOrdersService(heads);
         ordersAPI.addOrder(order, callback);
     }
 
-    public static void getClientOrders(int page, Context context, Callback<List<ClientOrderDM>> callback){
+    public static void getClientOrders(int page, Context context, Callback<List<OrderDM>> callback){
         List<NameValuePair> heads = new ArrayList<>();
         heads.addAll(getAuthorisationHeaders(context));
         ClientOrdersAPI ordersAPI = client.getOrdersService(heads);
         ordersAPI.getOrdersPage(page, callback);
     }
 
-    public static void getOrder(int id, Context context, Callback<AssignedOrderDM> callback){
+    public static void getOrder(int id, Context context, Callback<OrderDetailsDM> callback){
         List<NameValuePair> heads = new ArrayList<>();
         heads.addAll(getAuthorisationHeaders(context));
         ClientOrdersAPI ordersAPI = client.getOrdersService(heads);
         ordersAPI.getOrder(id, callback);
     }
 
-    public static void cancelOrder(int id, Context context, Callback<ClientOrderDM> callback){
+    public static void cancelOrder(int id, Context context, Callback<OrderDM> callback){
         List<NameValuePair> heads = new ArrayList<>();
         heads.addAll(getAuthorisationHeaders(context));
         ClientOrdersAPI ordersAPI = client.getOrdersService(heads);

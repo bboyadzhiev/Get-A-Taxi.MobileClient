@@ -9,7 +9,7 @@ import org.parceler.Parcel;
  */
 
 @Parcel
-public class ClientOrderDM {
+public class OrderDM {
     @SerializedName("orderId")
     public int orderId;
 
@@ -33,4 +33,10 @@ public class ClientOrderDM {
 
     @SerializedName("custComment")
     public String userComment;
+
+    @SerializedName("status")
+    public int status;
+
+    @SerializedName("pickupTime")
+    public int pickupTime;
 }

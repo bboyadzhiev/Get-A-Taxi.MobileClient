@@ -22,9 +22,13 @@ public final class Constants {
     public static final String HUB_DISCONNECT = "Close";
     public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
     public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
+    public static final String HUB_TAXI_ASSIGNED = "taxiAssigned";
     public static final String ORDER_ID = "ORDER_ID";
 
     public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
+    public static final String HUB_TAXI_ASSIGNED_BC = PACKAGE_NAME + HUB_TAXI_ASSIGNED;
+    public static final String HUB_ASSIGNED_TAXI_ID = PACKAGE_NAME + ".ASSIGNED_TAXI_ID";
+    public static final String HUB_ASSIGNED_TAXI_PLATE = PACKAGE_NAME + ".ASSIGNED_TAXI_PLATE";
 
     // Connection timeouts in milliseconds
     public static final int READ_TIMEOUT = 15000;
@@ -84,14 +88,24 @@ public final class Constants {
     public static final String LAST_ORDER_ID = PACKAGE_NAME + ".lastOrderId";
     public static final String TRACKING_ENABLED = PACKAGE_NAME + "trackingEnabled";
 
-    public static final String ASSIGNED_TAXI =  PACKAGE_NAME + ".ASSIGNED_TAXI";
-    public static final String ASSIGNED_TAXI_ID =  PACKAGE_NAME + ".ASSIGNED_TAXI_ID";
     public static final float ARRIVAL_DISTANCE_THRESHOLD = 50; // meters
-    public static final String TAXI_HAS_ARRIVED = PACKAGE_NAME + ".TAXI_HAS_ARRIVED" ;
+    public static final String TAXI_HAS_ARRIVED_BC = PACKAGE_NAME + ".TAXI_HAS_ARRIVED_BC" ;
 
 
     // UI - no UI strings should be here!
 
     // DEBUGGING STRINGS
 
+
+    public enum OrderStatus {
+        Unassigned(0), Waiting(1), InProgress(2), Finished(3), Cancelled(4);
+        private final int value;
+        private OrderStatus(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
 }

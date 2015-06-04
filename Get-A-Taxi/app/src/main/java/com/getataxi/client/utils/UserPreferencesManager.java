@@ -2,14 +2,11 @@ package com.getataxi.client.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
 
-import com.getataxi.client.comm.contracts.ClientOrdersAPI;
-import com.getataxi.client.comm.models.ClientOrderDM;
+import com.getataxi.client.comm.models.OrderDM;
 import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
-import com.getataxi.client.comm.models.TaxiDetailsDM;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -21,7 +18,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.CompletionService;
 
 
 /**
@@ -192,7 +188,7 @@ public class UserPreferencesManager {
     }
 
     @Deprecated
-    public static void storeOrder(ClientOrderDM order, Context context){
+    public static void storeOrder(OrderDM order, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
         Gson gson = new Gson();
@@ -203,14 +199,14 @@ public class UserPreferencesManager {
 
 
     @Deprecated
-    public static ClientOrderDM loadOrder(Context context){
+    public static OrderDM loadOrder(Context context){
         SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         String orderString = userPref.getString(Constants.ORDER_DATA, "");
         if (orderString.isEmpty()){
             return null;
         }
         Gson gson = new Gson();
-        ClientOrderDM order = gson.fromJson(orderString, ClientOrderDM.class);
+        OrderDM order = gson.fromJson(orderString, OrderDM.class);
         return order;
     }
 
@@ -245,7 +241,7 @@ public class UserPreferencesManager {
         editor.commit();
     }
 
-    public static boolean hasAssignedOrder(Context context){
+    public static boolean hasActiveOrder(Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         return userPrefs.getInt(Constants.LAST_ORDER_ID, -1) != -1;
     }

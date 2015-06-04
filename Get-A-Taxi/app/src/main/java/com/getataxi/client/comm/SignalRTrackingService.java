@@ -1,8 +1,5 @@
 package com.getataxi.client.comm;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,7 +11,6 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.getataxi.client.OrderMap;
 import com.getataxi.client.R;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.utils.Constants;
@@ -121,8 +117,8 @@ public class SignalRTrackingService extends Service {
                 taxiLocation.setLatitude(lat);
                 taxiLocation.setLongitude(lon);
 
-                if(!notificationHasBeenSent && taxiHasArrived()){
-                    broadcastIntent =  new Intent(Constants.TAXI_HAS_ARRIVED);
+                if (!notificationHasBeenSent && taxiHasArrived()) {
+                    broadcastIntent = new Intent(Constants.TAXI_HAS_ARRIVED_BC);
                     sendOrderedBroadcast(broadcastIntent, null);
 
                 }
@@ -134,6 +130,17 @@ public class SignalRTrackingService extends Service {
             }
         }, Double.class, Double.class);
 
+        proxy.on(Constants.HUB_TAXI_ASSIGNED, new SubscriptionHandler2<Integer, String>() {
+            @Override
+            public void run(Integer taxiId, String plate) {
+                Log.d("TRACKINGSERVICE", "TAXI_ASSIGNED");
+                broadcastIntent = new Intent(Constants.HUB_TAXI_ASSIGNED_BC);
+                broadcastIntent.putExtra(Constants.HUB_ASSIGNED_TAXI_ID, taxiId);
+                broadcastIntent.putExtra(Constants.HUB_ASSIGNED_TAXI_PLATE, plate);
+                // for NotificationsReceiver
+                sendBroadcast(broadcastIntent, null);
+            }
+        }, Integer.class, String.class);
 
         Log.d("TRACKINGSERVICE", "DONE onStartCommand()");
         return Service.START_STICKY;
