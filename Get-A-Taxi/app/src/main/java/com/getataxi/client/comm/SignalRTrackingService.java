@@ -118,6 +118,7 @@ public class SignalRTrackingService extends Service {
                 taxiLocation.setLongitude(lon);
 
                 if (!notificationHasBeenSent && taxiHasArrived()) {
+                    Log.d("TRACKINGSERVICE", "Sending notification");
                     broadcastIntent = new Intent(Constants.TAXI_HAS_ARRIVED_BC);
                     sendOrderedBroadcast(broadcastIntent, null);
 
@@ -134,11 +135,11 @@ public class SignalRTrackingService extends Service {
             @Override
             public void run(Integer taxiId, String plate) {
                 Log.d("TRACKINGSERVICE", "TAXI_ASSIGNED");
-                broadcastIntent = new Intent(Constants.HUB_TAXI_ASSIGNED_BC);
+                broadcastIntent = new Intent(Constants.TAXI_WAS_ASSIGNED_BC);
                 broadcastIntent.putExtra(Constants.HUB_ASSIGNED_TAXI_ID, taxiId);
                 broadcastIntent.putExtra(Constants.HUB_ASSIGNED_TAXI_PLATE, plate);
                 // for NotificationsReceiver
-                sendBroadcast(broadcastIntent, null);
+                sendOrderedBroadcast(broadcastIntent, null);
             }
         }, Integer.class, String.class);
 
@@ -148,13 +149,21 @@ public class SignalRTrackingService extends Service {
     }
 
     private boolean taxiHasArrived(){
+        if(myLocation == null){
+            Log.d("TRACKINGSERVICE", "Dont' know my location");
+        }
+        if(taxiLocation == null){
+            Log.d("TRACKINGSERVICE", "Dont' know taxi location");
+        }
         if (myLocation != null && taxiLocation != null) {
             float distance = taxiLocation.distanceTo(myLocation);
 
             if (distance <= Constants.ARRIVAL_DISTANCE_THRESHOLD) {
+                Log.d("TRACKINGSERVICE", "TAXI HAS ARRIVED");
                 return true;
             }
         }
+        Log.d("TRACKINGSERVICE", "TAXI HAS NOT ARRIVED YET");
         return false;
     }
     @Override
@@ -180,13 +189,14 @@ public class SignalRTrackingService extends Service {
             String action = intent.getAction();
 
             if (action.equals(Constants.LOCATION_UPDATED)) {
-                if(!reportLocationEnabled){
-                    return;
-                }
+
                 Bundle data = intent.getExtras();
 
                 myLocation = data.getParcelable(Constants.LOCATION);
 
+                if(!reportLocationEnabled){
+                    return;
+                }
                 double lat = myLocation.getLatitude();
                 double lon = myLocation.getLongitude();
 

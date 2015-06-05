@@ -79,8 +79,8 @@
             />
         <receiver android:name=".utils.NotificationsReceiver">
             <intent-filter>
-                <action android:name= "com.getataxi.mobiletaxi.utils.TAXI_HAS_ARRIVED" />
-                <action android:name= "com.getataxi.mobiletaxi.utilstaxiAssigned" />
+                <action android:name= "com.getataxi.client.utils.TAXI_HAS_ARRIVED_BC" />
+                <action android:name= "com.getataxi.client.utils.TAXI_WAS_ASSIGNED_BC" />
             </intent-filter>
         </receiver>
     </application>

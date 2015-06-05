@@ -26,7 +26,6 @@ public final class Constants {
     public static final String ORDER_ID = "ORDER_ID";
 
     public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
-    public static final String HUB_TAXI_ASSIGNED_BC = PACKAGE_NAME + HUB_TAXI_ASSIGNED;
     public static final String HUB_ASSIGNED_TAXI_ID = PACKAGE_NAME + ".ASSIGNED_TAXI_ID";
     public static final String HUB_ASSIGNED_TAXI_PLATE = PACKAGE_NAME + ".ASSIGNED_TAXI_PLATE";
 
@@ -90,7 +89,7 @@ public final class Constants {
 
     public static final float ARRIVAL_DISTANCE_THRESHOLD = 50; // meters
     public static final String TAXI_HAS_ARRIVED_BC = PACKAGE_NAME + ".TAXI_HAS_ARRIVED_BC" ;
-
+    public static final String TAXI_WAS_ASSIGNED_BC = PACKAGE_NAME + ".TAXI_WAS_ASSIGNED_BC" ;
 
     // UI - no UI strings should be here!
 

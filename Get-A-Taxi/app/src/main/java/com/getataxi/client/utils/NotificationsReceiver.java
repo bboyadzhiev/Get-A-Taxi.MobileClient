@@ -21,13 +21,14 @@ public class NotificationsReceiver extends BroadcastReceiver {
     // receive peer location changed
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.d("NOTIFICATIONS_RECEIVER", "SOMEBODY CALLED ME!" );
         NotificationManager mgr =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         String action = intent.getAction();
 
-        if(action.equals(Constants.HUB_TAXI_ASSIGNED_BC)){
-            Log.d("NOTIFICATIONS_RECEIVER", Constants.HUB_TAXI_ASSIGNED_BC );
-            String title = context.getResources().getString(R.string.taxi_has_arrived);
+        if(action.equals(Constants.TAXI_WAS_ASSIGNED_BC)){
+            Log.d("NOTIFICATIONS_RECEIVER", Constants.TAXI_WAS_ASSIGNED_BC );
+            String title = context.getResources().getString(R.string.taxi_was_assigned);
             String subtitle = intent.getStringExtra(Constants.HUB_ASSIGNED_TAXI_PLATE);
             Notification note = new Notification(R.drawable.taxi,
                     title,

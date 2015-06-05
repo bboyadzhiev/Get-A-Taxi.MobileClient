@@ -56,6 +56,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import org.apache.http.HttpStatus;
 import org.parceler.Parcels;
@@ -108,7 +110,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     private boolean trackingEnabled;
 
     // Order details
-    private OrderDetailsDM currentOrderDetailsDM;
+    private OrderDetailsDM placedOrderDetailsDM;
     private boolean inActiveOrder = false;
     private int activeOrderId = -1;
 
@@ -137,6 +139,13 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         startService(trackingIntent);
     }
 
+    private void stopTrackingService() {
+        // Stop tracking service
+        Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
+        stopService(trackingService);
+    }
+
+    // BROADCAST RECEIVERS
     /**
      * The receiver for the Location Service - location update broadcasts
      * and the SignalR Notification Service - peer location change broadcasts
@@ -156,15 +165,17 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 accuracy = data.getFloat(Constants.LOCATION_ACCURACY, Constants.LOCATION_ACCURACY_THRESHOLD);
 
                 if(accuracy < Constants.LOCATION_ACCURACY_THRESHOLD) {
-                    // Reverse geocode for an address
-                    initiateReverseGeocode(currentLocation, Constants.START_TAG);
-                    if(taxiStandDMs.isEmpty()){
-                        updateTaxiStands(context);
-                    }
+                    if(!inActiveOrder) {
+                        // Reverse geocode for an address, only if not in active order
+                        initiateReverseGeocode(currentLocation, Constants.START_TAG);
 
+                        if(taxiStandDMs.isEmpty()){
+                            updateTaxiStands(context);
+                        }
+                    }
                 }
 
-                Log.d("REPORTEDACURRACY", "REPORTEDACURRACY: "+accuracy);
+                Log.d("ORDER_MAP", "REPORTEDACURRACY: "+accuracy);
 
                 // Allow ordering
                 if(!inActiveOrder){
@@ -173,11 +184,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
 //                double clientLat = currentLocation.getLatitude();
 //                double clientLon = currentLocation.getLongitude();
-
-
-
                 String currentAddressMarkerTitle;
-
 //                if(lastReverseGeocodedLocation != null){
 //                    lastReverseGeocodedLocation.latitude = clientLat;
 //                    lastReverseGeocodedLocation.longitude = clientLon;
@@ -194,26 +201,26 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
                 updateClientMarkers(currentAddressMarkerTitle, true);
 
-
-
             } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED_BC)){
                 // Taxi location change
 
                 // Checking if we have any order data
-                if(currentOrderDetailsDM == null){
-                    currentOrderDetailsDM = new OrderDetailsDM();
-                    currentOrderDetailsDM.taxiId = -1;
+                if(placedOrderDetailsDM == null){
+                    placedOrderDetailsDM = new OrderDetailsDM();
+                    placedOrderDetailsDM.taxiId = -1;
                 }
-                if(currentOrderDetailsDM.taxiId == -1){
-                    currentOrderDetailsDM.taxiPlate = getResources().getString(R.string.getting_details_txt);
+                String markerTitle;
+                if(placedOrderDetailsDM.taxiId == -1){
+                    // Don't know the taxi details
+                    markerTitle = getResources().getString(R.string.getting_details_txt);
                     // Try to get the assigned order details
-                    getLastOrder();
+                    updateActiveOrderDetails();
+                } else {
+                    markerTitle = placedOrderDetailsDM.taxiPlate + " - " + placedOrderDetailsDM.driverName;
                 }
 
                 Bundle data = intent.getExtras();
                 taxiLocation = data.getParcelable(Constants.LOCATION);
-
-                String markerTitle = currentOrderDetailsDM.taxiPlate + " - " + currentOrderDetailsDM.driverName;
                 LatLng latLng =  new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
                 taxiLocationMarker = updateMarker(
                         taxiLocationMarker,
@@ -222,46 +229,16 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         R.drawable.taxi,
                         false
                 );
-            } else if(action.equals(Constants.HUB_TAXI_ASSIGNED_BC)){
+            } else if(action.equals(Constants.TAXI_WAS_ASSIGNED_BC)){
                 // Order status has been changed by the taxi driver
                 int taxiId = intent.getIntExtra(Constants.HUB_ASSIGNED_TAXI_ID, -1);
                 if(taxiId != -1){
-                    getActiveOrderDetails();
+                    updateActiveOrderDetails();
                 }
 
             }
         }
     };
-
-
-
-    private void updateTaxiStands(Context context) {
-        LocationDM location = new LocationDM();
-        location.latitude = currentLocation.getLatitude();
-        location.longitude = currentLocation.getLongitude();
-
-        RestClientManager.getTaxiStands(currentLocation.getLatitude(), currentLocation.getLongitude(), context, new Callback<List<TaxiStandDM>>() {
-            @Override
-            public void success(List<TaxiStandDM> taxiStands, Response response) {
-                taxiStandDMs.clear();
-                taxiStandDMs.addAll(taxiStands);
-                for (TaxiStandDM stand : taxiStands) {
-                    MarkerOptions markerOpts = new MarkerOptions()
-                            .position(new LatLng(stand.latitude, stand.longitude))
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.taxistand))
-                            .title(stand.alias);
-
-                    Marker marker = mMap.addMarker(markerOpts);
-                }
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-
-            }
-        });
-    }
-
 
     // ACTIVITY LIFECYCLE
     /**
@@ -301,7 +278,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         inActiveOrder = UserPreferencesManager.hasActiveOrder(context);
         if(inActiveOrder) {
             activeOrderId = UserPreferencesManager.getLastOrderId(context);
-            getLastOrder();
+            updateLastOrder();
             toggleButton(ButtonType.Cancel);
         } else {
             toggleButton(ButtonType.Place);
@@ -346,14 +323,13 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         stopService(locationService);
 
         // Stop tracking service
-        Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
-        stopService(trackingService);
+        stopTrackingService();
 
         unregisterReceiver(locationReceiver);
     }
 
     // BUSINESS LOGIC
-    private void getActiveOrderDetails(){
+    private void updateActiveOrderDetails(){
         showProgress(true);
         RestClientManager.getOrder(activeOrderId, context, new Callback<OrderDetailsDM>() {
             @Override
@@ -361,10 +337,22 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
                     try {
-                        currentOrderDetailsDM = existingOrderDM;
+                        if (existingOrderDM.status == Constants.OrderStatus.Finished.getValue()
+                                || existingOrderDM.status == Constants.OrderStatus.Cancelled.getValue()) {
+                            clearStoredOrder();
+                        }
 
-                        updateClientMarkers(currentOrderDetailsDM.orderAddress, true);
+                        if (existingOrderDM.status == Constants.OrderStatus.InProgress.getValue()) {
+                            updatePlacedOrderDM(existingOrderDM);
+                            updateClientMarkers("Ordered at:" + existingOrderDM.orderAddress, true);
+                            cancelOrderButton.setEnabled(false);
+                        }
 
+                        if (existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()
+                                || existingOrderDM.status == Constants.OrderStatus.Waiting.getValue()) {
+                            updatePlacedOrderDM(existingOrderDM);
+                            updateClientMarkers("Ordered at:" + existingOrderDM.orderAddress, true);
+                        }
                     } catch (IllegalStateException e) {
                         e.printStackTrace();
                     } finally {
@@ -387,13 +375,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         });
     }
 
-    private void getLastOrder(){
-
-        if(!inActiveOrder){
-            toggleButton(ButtonType.Place);
-            return;
-        }
-
+    private void updateLastOrder(){
         // Client was in active order status
         showProgress(true);
         RestClientManager.getOrder(activeOrderId, context, new Callback<OrderDetailsDM>() {
@@ -403,11 +385,25 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
                     try {
-                        currentOrderDetailsDM = existingOrderDM;
-                        inActiveOrder = true;
-                        initiateTracking(activeOrderId);
 
-                        updateClientMarkers(currentOrderDetailsDM.orderAddress, true);
+                        if (existingOrderDM.status == Constants.OrderStatus.Finished.getValue()
+                                || existingOrderDM.status == Constants.OrderStatus.Cancelled.getValue()) {
+                            clearStoredOrder();
+                        }
+
+                        if (existingOrderDM.status == Constants.OrderStatus.InProgress.getValue()) {
+                            updatePlacedOrderDM(existingOrderDM);
+                            updateClientMarkers("Ordered at:" + existingOrderDM.orderAddress, true);
+                            initiateTracking(activeOrderId);
+                            cancelOrderButton.setEnabled(false);
+                        }
+
+                        if (existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()
+                                || existingOrderDM.status == Constants.OrderStatus.Waiting.getValue()) {
+                            updatePlacedOrderDM(existingOrderDM);
+                            updateClientMarkers("Ordered at:" + existingOrderDM.orderAddress, true);
+                            initiateTracking(activeOrderId);
+                        }
 
 
                     } catch (IllegalStateException e) {
@@ -435,24 +431,39 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         });
     }
 
+    private void updatePlacedOrderDM(OrderDetailsDM existingOrderDM) {
+        placedOrderDetailsDM = existingOrderDM;
+            UserPreferencesManager.storeOrderId(existingOrderDM.orderId, context);
+            activeOrderId = existingOrderDM.orderId;
+            inActiveOrder = true;
+
+
+        currentAddress = placedOrderDetailsDM.orderAddress;
+        if(currentLocation == null) {
+            currentLocation = new Location("placedOrderDetailsDM");
+            currentLocation.setLatitude(placedOrderDetailsDM.orderLatitude);
+            currentLocation.setLongitude(placedOrderDetailsDM.orderLongitude);
+        }
+
+
+    }
+
+    private void clearStoredOrder() {
+        UserPreferencesManager.clearOrder(context);
+        inActiveOrder = false;
+        activeOrderId = -1;
+        placedOrderDetailsDM = null;
+        toggleButton(ButtonType.Place);
+    }
+
     private void updateClientMarkers(String orderAddressTitle, boolean animate) {
-//        if(currentLocation == null && currentOrderDetailsDM != null){
-//            currentLocationMarker = updateMarker(
-//                    currentLocationMarker,
-//                    new LatLng(currentOrderDetailsDM.orderLatitude, currentOrderDetailsDM.orderLongitude),
-//                    currentOrderDetailsDM.orderAddress,
-//                    R.drawable.person,
-//                    animate
-//            );
-//        } else {
-            currentLocationMarker = updateMarker(
-                    currentLocationMarker,
-                    new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
-                    orderAddressTitle,
-                    R.drawable.person,
-                    animate
-            );
-//        }
+        currentLocationMarker = updateMarker(
+                currentLocationMarker,
+                new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
+                orderAddressTitle,
+                R.drawable.person,
+                animate
+        );
 
         if(destinationLocation != null) {
                 destinationLocationMarker = updateMarker(destinationLocationMarker,
@@ -461,33 +472,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         R.drawable.destination,
                         false
                 );
-
         }
-    }
-
-    private void showToastError(RetrofitError error) {
-        if(error.getResponse() != null) {
-            if (error.getResponse().getBody() != null) {
-                String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-                if(!json.isEmpty()){
-                    Toast.makeText(context, json, Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            }else {
-                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        } else {
-            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void clearStoredOrder() {
-        UserPreferencesManager.clearOrder(context);
-        inActiveOrder = false;
-        activeOrderId = -1;
-        currentOrderDetailsDM = null;
-        toggleButton(ButtonType.Place);
     }
 
     private OrderDM prepareClientOrderDM() {
@@ -517,6 +502,55 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         order.userComment = clientOrder.userComment;
         order.taxiId = -1;
         return  order;
+    }
+
+    private void updateTaxiStands(Context context) {
+        LocationDM location = new LocationDM();
+        location.latitude = currentLocation.getLatitude();
+        location.longitude = currentLocation.getLongitude();
+
+        RestClientManager.getTaxiStands(currentLocation.getLatitude(), currentLocation.getLongitude(), context, new Callback<List<TaxiStandDM>>() {
+            @Override
+            public void success(List<TaxiStandDM> taxiStands, Response response) {
+                taxiStandDMs.clear();
+                taxiStandDMs.addAll(taxiStands);
+                for (TaxiStandDM stand : taxiStands) {
+                    MarkerOptions markerOpts = new MarkerOptions()
+                            .position(new LatLng(stand.latitude, stand.longitude))
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.taxistand))
+                            .title(stand.alias);
+
+                    Marker marker = mMap.addMarker(markerOpts);
+                }
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+
+            }
+        });
+    }
+
+    private boolean showToastError(RetrofitError error) {
+        if(error.getResponse() != null) {
+            if (error.getResponse().getBody() != null) {
+                String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+                if(!json.isEmpty()){
+                    JsonObject jobj = new Gson().fromJson(json, JsonObject.class);
+                    String message = jobj.get("Message").getAsString();
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                    // There was a message from the server
+                    return true;
+                } else {
+                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            } else {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+        }
+        return false;
     }
 
     // USER INTERFACE
@@ -603,10 +637,12 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
                         @Override
                         public void failure(RetrofitError error) {
-                            showProgress(false);
-                            //clearStoredOrder();
-                            //placeOrderButton.setEnabled(true);
+                            boolean hadMessage = showToastError(error);
                             toggleButton(ButtonType.Cancel);
+                            if(hadMessage){
+                                cancelOrderButton.setEnabled(false);
+                                clearStoredOrder();
+                            }
                             showToastError(error);
                         }
                     });
@@ -641,11 +677,11 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
                             if (status == HttpStatus.SC_OK) {
                             try {
-                                currentOrderDetailsDM = fromClientOrderDM(clientOrder);
+                                placedOrderDetailsDM = fromClientOrderDM(clientOrder);
                                 UserPreferencesManager.storeOrderId(clientOrder.orderId, context);
                                 inActiveOrder = true;
                                 activeOrderId = clientOrder.orderId;
-                                initiateTracking(clientOrder.orderId);
+                                initiateTracking(activeOrderId);
                                 toggleButton(ButtonType.Cancel);
                             } catch (IllegalStateException e) {
                                 e.printStackTrace();
