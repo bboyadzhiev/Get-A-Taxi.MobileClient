@@ -26,8 +26,8 @@ public class NotificationsReceiver extends BroadcastReceiver {
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         String action = intent.getAction();
 
-        if(action.equals(Constants.TAXI_WAS_ASSIGNED_BC)){
-            Log.d("NOTIFICATIONS_RECEIVER", Constants.TAXI_WAS_ASSIGNED_BC );
+        if(action.equals(Constants.TAXI_WAS_ASSIGNED_NOTIFY_BC)){
+            Log.d("NOTIFICATIONS_RECEIVER", Constants.TAXI_WAS_ASSIGNED_NOTIFY_BC);
             String title = context.getResources().getString(R.string.taxi_was_assigned);
             String subtitle = intent.getStringExtra(Constants.HUB_ASSIGNED_TAXI_PLATE);
             Notification note = new Notification(R.drawable.taxi,
@@ -42,8 +42,8 @@ public class NotificationsReceiver extends BroadcastReceiver {
             mgr.notify(TAXI_ASSIGNMENT_ID, note);
         }
 
-        if(action.equals(Constants.TAXI_HAS_ARRIVED_BC)) {
-            Log.d("NOTIFICATIONS_RECEIVER", Constants.TAXI_HAS_ARRIVED_BC );
+        if(action.equals(Constants.TAXI_HAS_ARRIVED_NOTIFY_BC)) {
+            Log.d("NOTIFICATIONS_RECEIVER", Constants.TAXI_HAS_ARRIVED_NOTIFY_BC);
             String title = context.getResources().getString(R.string.taxi_has_arrived);
             String subtitle = context.getResources().getString(R.string.see_map);
             Notification note = new Notification(R.drawable.taxi,

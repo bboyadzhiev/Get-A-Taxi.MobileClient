@@ -145,6 +145,13 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         stopService(trackingService);
     }
 
+    //Location Service
+    private void stopLocationService() {
+            // Stop location service
+            Intent stopLocationServiceIntent = new Intent(OrderMap.this, LocationService.class);
+            context.stopService(stopLocationServiceIntent);
+    }
+
     // BROADCAST RECEIVERS
     /**
      * The receiver for the Location Service - location update broadcasts
@@ -210,32 +217,48 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                     placedOrderDetailsDM.taxiId = -1;
                 }
                 String markerTitle;
+                Bundle data = intent.getExtras();
+                taxiLocation = data.getParcelable(Constants.LOCATION);
+                LatLng latLng =  new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
                 if(placedOrderDetailsDM.taxiId == -1){
                     // Don't know the taxi details
                     markerTitle = getResources().getString(R.string.getting_details_txt);
                     // Try to get the assigned order details
                     updateActiveOrderDetails();
+                    taxiLocationMarker = updateMarker(
+                            taxiLocationMarker,
+                            latLng,
+                            markerTitle,
+                            R.drawable.taxi,
+                            false
+                    );
                 } else {
                     markerTitle = placedOrderDetailsDM.taxiPlate + " - " + placedOrderDetailsDM.driverName;
+                    if(placedOrderDetailsDM.status == Constants.OrderStatus.InProgress.getValue()) {
+                        taxiLocationMarker = updateMarker(
+                                taxiLocationMarker,
+                                latLng,
+                                markerTitle,
+                                R.drawable.taxi,
+                                true
+                        );
+                    }
                 }
 
-                Bundle data = intent.getExtras();
-                taxiLocation = data.getParcelable(Constants.LOCATION);
-                LatLng latLng =  new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
-                taxiLocationMarker = updateMarker(
-                        taxiLocationMarker,
-                        latLng,
-                        markerTitle,
-                        R.drawable.taxi,
-                        false
-                );
-            } else if(action.equals(Constants.TAXI_WAS_ASSIGNED_BC)){
+
+
+            } else if(action.equals(Constants.TAXI_WAS_ASSIGNED_NOTIFY_BC)){
                 // Order status has been changed by the taxi driver
                 int taxiId = intent.getIntExtra(Constants.HUB_ASSIGNED_TAXI_ID, -1);
                 if(taxiId != -1){
                     updateActiveOrderDetails();
                 }
 
+            } else if(action.equals(Constants.ORDER_STATUS_CHANGED_BC)){
+                int orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
+                if(orderId != -1 && activeOrderId == orderId){
+                    updateActiveOrderDetails();
+                }
             }
         }
     };
@@ -319,8 +342,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         super.onDestroy();
 
         //Stop location service
-        Intent locationService = new Intent(OrderMap.this, LocationService.class);
-        stopService(locationService);
+        stopLocationService();
 
         // Stop tracking service
         stopTrackingService();
@@ -344,7 +366,10 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
                         if (existingOrderDM.status == Constants.OrderStatus.InProgress.getValue()) {
                             updatePlacedOrderDM(existingOrderDM);
-                            updateClientMarkers("Ordered at:" + existingOrderDM.orderAddress, true);
+                            // Removing current client marker, it should be the taxi
+                            if(currentLocationMarker != null) {
+                                currentLocationMarker.remove();
+                            }
                             cancelOrderButton.setEnabled(false);
                         }
 
@@ -454,6 +479,9 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         activeOrderId = -1;
         placedOrderDetailsDM = null;
         toggleButton(ButtonType.Place);
+        if(taxiLocationMarker != null ){
+            taxiLocationMarker.remove();
+        }
     }
 
     private void updateClientMarkers(String orderAddressTitle, boolean animate) {
@@ -604,11 +632,6 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             @Override
             public void onClick(View v) {
                 cancelOrderButton.setEnabled(false);
-                if (trackingEnabled) {
-                    // Stop location service
-                    Intent stopLocationServiceIntent = new Intent(OrderMap.this, LocationService.class);
-                    context.stopService(stopLocationServiceIntent);
-                }
                 showProgress(true);
 
                 if(inActiveOrder){
@@ -658,11 +681,6 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             @Override
             public void onClick(View v) {
                 placeOrderButton.setEnabled(false);
-                if (trackingEnabled) {
-                    // Stop location service
-                    Intent stopLocationServiceIntent = new Intent(OrderMap.this, LocationService.class);
-                    context.stopService(stopLocationServiceIntent);
-                }
 
                 showProgress(true);
 
@@ -703,6 +721,8 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             }
         });
     }
+
+
 
     public enum ButtonType {
         Place, Cancel
@@ -785,13 +805,13 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 Toast.makeText(context, R.string.tracking_disabled_txt, Toast.LENGTH_LONG).show();
             }
 
-
             UserPreferencesManager.setTrackingState(trackingEnabled, context);
             return true;
         }
 
         if(id == R.id.order_map_action_exit) {
             finish();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);

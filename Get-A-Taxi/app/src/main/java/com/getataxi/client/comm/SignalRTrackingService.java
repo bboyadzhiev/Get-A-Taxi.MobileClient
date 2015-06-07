@@ -23,6 +23,7 @@ import microsoft.aspnet.signalr.client.Logger;
 import microsoft.aspnet.signalr.client.SignalRFuture;
 import microsoft.aspnet.signalr.client.hubs.HubConnection;
 import microsoft.aspnet.signalr.client.hubs.HubProxy;
+import microsoft.aspnet.signalr.client.hubs.SubscriptionHandler1;
 import microsoft.aspnet.signalr.client.hubs.SubscriptionHandler2;
 
 
@@ -38,7 +39,7 @@ public class SignalRTrackingService extends Service {
     Location taxiLocation;
     Location myLocation;
     boolean notificationHasBeenSent = false;
-    private static final int NOTIFY_ME_ID=1338;
+    private static final String TAG = "TRACKING_SERVICE";
 
     int orderId;
     @Override
@@ -49,7 +50,7 @@ public class SignalRTrackingService extends Service {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.LOCATION_UPDATED);
         registerReceiver(locationReceiver, filter);
-        Log.d("TRACKINGSERVICE", "STARTED");
+        Log.d(TAG, "STARTED");
 
     }
 
@@ -57,7 +58,7 @@ public class SignalRTrackingService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
         Toast.makeText(this, getString(R.string.tracking_started), Toast.LENGTH_LONG).show();
-        Log.d("TRACKINGSERVICE", "onStartCommand");
+        Log.d(TAG, "onStartCommand");
         orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
         String baseUsrl = intent.getStringExtra(Constants.BASE_URL_STORAGE);
         reportLocationEnabled = intent.getBooleanExtra(Constants.LOCATION_REPORT_ENABLED, false);
@@ -67,7 +68,7 @@ public class SignalRTrackingService extends Service {
         }
 
         String server =  baseUsrl + Constants.HUB_ENDPOINT;
-        Log.d("TRACKINGSERVICE", server);
+        Log.d(TAG, server);
         Logger l  = new Logger() {
             @Override
             public void log(String s, LogLevel logLevel) {
@@ -85,7 +86,7 @@ public class SignalRTrackingService extends Service {
         connection.setCredentials(new TokenAuthenticationCredentials(loginData.accessToken));
         //connection.prepareRequest(request);
 
-        Log.d("TRACKINGSERVICE", "awaiting connection");
+        Log.d(TAG, "awaiting connection");
         SignalRFuture<Void> awaitConnection = connection.start();
         try {
             awaitConnection.get();
@@ -95,7 +96,7 @@ public class SignalRTrackingService extends Service {
             e.printStackTrace();
         }
 
-        Log.d("TRACKINGSERVICE", "invoking hub");
+        Log.d(TAG, "invoking hub");
         //TelephonyManager tMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
         //String phoneNumber = tMgr.getLine1Number();
         proxy.invoke(Constants.HUB_CONNECT, orderId);
@@ -108,18 +109,18 @@ public class SignalRTrackingService extends Service {
 //            }
 //        }, String.class);
 
-        Log.d("TRACKINGSERVICE", "registering callback");
+        Log.d(TAG, "registering callback");
         proxy.on(Constants.HUB_PEER_LOCATION_CHANGED, new SubscriptionHandler2<Double, Double>() {
             @Override
             public void run(Double lat, Double lon) {
-                Log.d("TRACKINGSERVICE", "HUB_PEER_LOCATION_CHANGED");
+                Log.d(TAG, Constants.HUB_PEER_LOCATION_CHANGED);
                 taxiLocation = new Location("void");
                 taxiLocation.setLatitude(lat);
                 taxiLocation.setLongitude(lon);
 
                 if (!notificationHasBeenSent && taxiHasArrived()) {
-                    Log.d("TRACKINGSERVICE", "Sending notification");
-                    broadcastIntent = new Intent(Constants.TAXI_HAS_ARRIVED_BC);
+                    Log.d(TAG, "Sending notification");
+                    broadcastIntent = new Intent(Constants.TAXI_HAS_ARRIVED_NOTIFY_BC);
                     sendOrderedBroadcast(broadcastIntent, null);
 
                 }
@@ -134,8 +135,8 @@ public class SignalRTrackingService extends Service {
         proxy.on(Constants.HUB_TAXI_ASSIGNED, new SubscriptionHandler2<Integer, String>() {
             @Override
             public void run(Integer taxiId, String plate) {
-                Log.d("TRACKINGSERVICE", "TAXI_ASSIGNED");
-                broadcastIntent = new Intent(Constants.TAXI_WAS_ASSIGNED_BC);
+                Log.d(TAG, Constants.HUB_TAXI_ASSIGNED);
+                broadcastIntent = new Intent(Constants.TAXI_WAS_ASSIGNED_NOTIFY_BC);
                 broadcastIntent.putExtra(Constants.HUB_ASSIGNED_TAXI_ID, taxiId);
                 broadcastIntent.putExtra(Constants.HUB_ASSIGNED_TAXI_PLATE, plate);
                 // for NotificationsReceiver
@@ -143,27 +144,37 @@ public class SignalRTrackingService extends Service {
             }
         }, Integer.class, String.class);
 
-        Log.d("TRACKINGSERVICE", "DONE onStartCommand()");
+        proxy.on(Constants.HUB_ORDER_STATUS_CHANGED, new SubscriptionHandler1<Integer>() {
+            @Override
+            public void run(Integer orderId) {
+                Log.d(TAG, Constants.HUB_ORDER_STATUS_CHANGED);
+                broadcastIntent = new Intent(Constants.ORDER_STATUS_CHANGED_BC);
+                broadcastIntent.putExtra(Constants.ORDER_ID, orderId);
+                sendBroadcast(broadcastIntent);
+            }
+        }, Integer.class);
+
+        Log.d(TAG, "DONE onStartCommand()");
         return Service.START_STICKY;
                 //--------------------------------------------------------------------------------
     }
 
     private boolean taxiHasArrived(){
         if(myLocation == null){
-            Log.d("TRACKINGSERVICE", "Dont' know my location");
+            Log.d(TAG, "Don't know my location");
         }
         if(taxiLocation == null){
-            Log.d("TRACKINGSERVICE", "Dont' know taxi location");
+            Log.d(TAG, "Don't know taxi location");
         }
         if (myLocation != null && taxiLocation != null) {
             float distance = taxiLocation.distanceTo(myLocation);
 
             if (distance <= Constants.ARRIVAL_DISTANCE_THRESHOLD) {
-                Log.d("TRACKINGSERVICE", "TAXI HAS ARRIVED");
+                Log.d(TAG, "TAXI HAS ARRIVED");
                 return true;
             }
         }
-        Log.d("TRACKINGSERVICE", "TAXI HAS NOT ARRIVED YET");
+        Log.d(TAG, "TAXI HAS NOT ARRIVED YET");
         return false;
     }
     @Override
@@ -201,7 +212,7 @@ public class SignalRTrackingService extends Service {
                 double lon = myLocation.getLongitude();
 
                 if ( proxy != null && orderId != -1){
-                    Log.d("TRACKINGSERVICE", "HUB_MY_LOCATION_CHANGED");
+                    Log.d(TAG, Constants.HUB_MY_LOCATION_CHANGED);
                     proxy.invoke(Constants.HUB_MY_LOCATION_CHANGED, orderId, lat, lon);
                 }
 

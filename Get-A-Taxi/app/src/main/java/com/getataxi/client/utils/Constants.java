@@ -16,6 +16,7 @@ public final class Constants {
     //public static final String DEFAULT_URL = "http://192.168.43.245:14938";
     public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
 
+    // Tracking hub
     public static final String HUB_ENDPOINT = "/signalr";
     public static final String HUB_PROXY = "trackingHub";
     public static final String HUB_CONNECT = "Open";
@@ -23,11 +24,17 @@ public final class Constants {
     public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
     public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
     public static final String HUB_TAXI_ASSIGNED = "taxiAssigned";
-    public static final String ORDER_ID = "ORDER_ID";
-
+    public static final String HUB_ORDER_STATUS_CHANGED = "orderStatusChanged";
+    // Hub broadcasts
     public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
+    public static final String ORDER_STATUS_CHANGED_BC = PACKAGE_NAME + "ORDER_STATUS_CHANGED_BC";
+    public static final String TAXI_HAS_ARRIVED_NOTIFY_BC = PACKAGE_NAME + ".TAXI_HAS_ARRIVED_NOTIFY_BC" ;
+    public static final String TAXI_WAS_ASSIGNED_NOTIFY_BC = PACKAGE_NAME + ".TAXI_WAS_ASSIGNED_NOTIFY_BC" ;
+
     public static final String HUB_ASSIGNED_TAXI_ID = PACKAGE_NAME + ".ASSIGNED_TAXI_ID";
     public static final String HUB_ASSIGNED_TAXI_PLATE = PACKAGE_NAME + ".ASSIGNED_TAXI_PLATE";
+
+    public static final String ORDER_ID = "ORDER_ID";
 
     // Connection timeouts in milliseconds
     public static final int READ_TIMEOUT = 15000;
@@ -58,7 +65,7 @@ public final class Constants {
     public static final String LOCATION_DATA_EXTRA = PACKAGE_NAME + ".LOCATION_DATA_EXTRA";
 
     //LOCATION SERVICE
-    public static final String LOCATION_UPDATED = PACKAGE_NAME + "LOCATION_UPDATED";
+    public static final String LOCATION_UPDATED = PACKAGE_NAME + ".LOCATION_UPDATED";
     public static final String LOCATION = PACKAGE_NAME + ".LOCATION";
     public static final String LOCATION_ACCURACY = PACKAGE_NAME + ".LOCATION_ACCURACY";
     public static final float LOCATION_ACCURACY_THRESHOLD = 30; // meters
@@ -88,8 +95,6 @@ public final class Constants {
     public static final String TRACKING_ENABLED = PACKAGE_NAME + "trackingEnabled";
 
     public static final float ARRIVAL_DISTANCE_THRESHOLD = 50; // meters
-    public static final String TAXI_HAS_ARRIVED_BC = PACKAGE_NAME + ".TAXI_HAS_ARRIVED_BC" ;
-    public static final String TAXI_WAS_ASSIGNED_BC = PACKAGE_NAME + ".TAXI_WAS_ASSIGNED_BC" ;
 
     // UI - no UI strings should be here!
 
