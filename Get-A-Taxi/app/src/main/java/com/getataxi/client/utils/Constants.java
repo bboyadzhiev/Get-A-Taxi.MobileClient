@@ -7,6 +7,8 @@ public final class Constants {
 
     // APP NAME
     public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
+    public static final String GSON_DATE_FORMAT = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS";
+    public static final int MAP_ANIMATION_ZOOM = 15;
 
     // COMMUNICATIONS
     // COMMUNICATIONS

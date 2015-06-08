@@ -59,15 +59,17 @@ public class SignalRTrackingService extends Service {
         super.onStartCommand(intent, flags, startId);
         Toast.makeText(this, getString(R.string.tracking_started), Toast.LENGTH_LONG).show();
         Log.d(TAG, "onStartCommand");
-        orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
-        String baseUsrl = intent.getStringExtra(Constants.BASE_URL_STORAGE);
+        Bundle data = intent.getExtras();
+        orderId = data.getInt(Constants.ORDER_ID, -1);
+        myLocation = data.getParcelable(Constants.LOCATION);
+        String baseUrl = data.getString(Constants.BASE_URL_STORAGE);
         reportLocationEnabled = intent.getBooleanExtra(Constants.LOCATION_REPORT_ENABLED, false);
 
         if(orderId == -1){
             return -1;
         }
 
-        String server =  baseUsrl + Constants.HUB_ENDPOINT;
+        String server =  baseUrl + Constants.HUB_ENDPOINT;
         Log.d(TAG, server);
         Logger l  = new Logger() {
             @Override
@@ -120,8 +122,8 @@ public class SignalRTrackingService extends Service {
 
                 if (!notificationHasBeenSent && taxiHasArrived()) {
                     Log.d(TAG, "Sending notification");
-                    broadcastIntent = new Intent(Constants.HUB_TAXI_HAS_ARRIVED_NOTIFY_BC);
-                    sendOrderedBroadcast(broadcastIntent, null);
+                    Intent notify = new Intent(Constants.HUB_TAXI_HAS_ARRIVED_NOTIFY_BC);
+                    sendOrderedBroadcast(notify, null);
 
                 }
 
@@ -136,11 +138,11 @@ public class SignalRTrackingService extends Service {
             @Override
             public void run(Integer taxiId, String plate) {
                 Log.d(TAG, Constants.HUB_TAXI_ASSIGNED);
-                broadcastIntent = new Intent(Constants.HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC);
-                broadcastIntent.putExtra(Constants.HUB_ASSIGNED_TAXI_ID, taxiId);
-                broadcastIntent.putExtra(Constants.HUB_ASSIGNED_TAXI_PLATE, plate);
+                Intent notify = new Intent(Constants.HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC);
+                notify.putExtra(Constants.HUB_ASSIGNED_TAXI_ID, taxiId);
+                notify.putExtra(Constants.HUB_ASSIGNED_TAXI_PLATE, plate);
                 // for NotificationsReceiver
-                sendOrderedBroadcast(broadcastIntent, null);
+                sendOrderedBroadcast(notify, null);
             }
         }, Integer.class, String.class);
 
