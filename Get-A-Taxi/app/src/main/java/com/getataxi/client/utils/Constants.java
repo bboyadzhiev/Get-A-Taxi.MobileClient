@@ -27,9 +27,9 @@ public final class Constants {
     public static final String HUB_ORDER_STATUS_CHANGED = "orderStatusChanged";
     // Hub broadcasts
     public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
-    public static final String ORDER_STATUS_CHANGED_BC = PACKAGE_NAME + "ORDER_STATUS_CHANGED_BC";
-    public static final String TAXI_HAS_ARRIVED_NOTIFY_BC = PACKAGE_NAME + ".TAXI_HAS_ARRIVED_NOTIFY_BC" ;
-    public static final String TAXI_WAS_ASSIGNED_NOTIFY_BC = PACKAGE_NAME + ".TAXI_WAS_ASSIGNED_NOTIFY_BC" ;
+    public static final String HUB_ORDER_STATUS_CHANGED_BC = PACKAGE_NAME + "HUB_ORDER_STATUS_CHANGED_BC";
+    public static final String HUB_TAXI_HAS_ARRIVED_NOTIFY_BC = PACKAGE_NAME + ".HUB_TAXI_HAS_ARRIVED_NOTIFY_BC" ;
+    public static final String HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC = PACKAGE_NAME + ".HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC" ;
 
     public static final String HUB_ASSIGNED_TAXI_ID = PACKAGE_NAME + ".ASSIGNED_TAXI_ID";
     public static final String HUB_ASSIGNED_TAXI_PLATE = PACKAGE_NAME + ".ASSIGNED_TAXI_PLATE";

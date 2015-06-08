@@ -3,11 +3,13 @@ package com.getataxi.client;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Point;
@@ -20,6 +22,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -220,6 +223,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 Bundle data = intent.getExtras();
                 taxiLocation = data.getParcelable(Constants.LOCATION);
                 LatLng latLng =  new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
+
                 if(placedOrderDetailsDM.taxiId == -1){
                     // Don't know the taxi details
                     markerTitle = getResources().getString(R.string.getting_details_txt);
@@ -233,8 +237,9 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                             false
                     );
                 } else {
+                    // Taxi details available, updating marker
                     markerTitle = placedOrderDetailsDM.taxiPlate + " - " + placedOrderDetailsDM.driverName;
-                    if(placedOrderDetailsDM.status == Constants.OrderStatus.InProgress.getValue()) {
+                    if(placedOrderDetailsDM.status == Constants.OrderStatus.Waiting.getValue() || placedOrderDetailsDM.status == Constants.OrderStatus.InProgress.getValue()) {
                         taxiLocationMarker = updateMarker(
                                 taxiLocationMarker,
                                 latLng,
@@ -247,14 +252,14 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
 
 
-            } else if(action.equals(Constants.TAXI_WAS_ASSIGNED_NOTIFY_BC)){
+            } else if(action.equals(Constants.HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC)){
                 // Order status has been changed by the taxi driver
                 int taxiId = intent.getIntExtra(Constants.HUB_ASSIGNED_TAXI_ID, -1);
                 if(taxiId != -1){
                     updateActiveOrderDetails();
                 }
 
-            } else if(action.equals(Constants.ORDER_STATUS_CHANGED_BC)){
+            } else if(action.equals(Constants.HUB_ORDER_STATUS_CHANGED_BC)){
                 int orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
                 if(orderId != -1 && activeOrderId == orderId){
                     updateActiveOrderDetails();
@@ -367,7 +372,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         if (existingOrderDM.status == Constants.OrderStatus.InProgress.getValue()) {
                             updatePlacedOrderDM(existingOrderDM);
                             // Removing current client marker, it should be the taxi
-                            if(currentLocationMarker != null) {
+                            if (currentLocationMarker != null) {
                                 currentLocationMarker.remove();
                             }
                             cancelOrderButton.setEnabled(false);
@@ -481,6 +486,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         toggleButton(ButtonType.Place);
         if(taxiLocationMarker != null ){
             taxiLocationMarker.remove();
+            taxiLocation = null;
         }
     }
 
@@ -661,11 +667,17 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         @Override
                         public void failure(RetrofitError error) {
                             boolean hadMessage = showToastError(error);
-                            toggleButton(ButtonType.Cancel);
+                            //toggleButton(ButtonType.Cancel);
                             if(hadMessage){
                                 cancelOrderButton.setEnabled(false);
-                                clearStoredOrder();
+                              //  clearStoredOrder();
                             }
+                            if(error.getResponse() != null) {
+                                if(error.getResponse().getStatus() == HttpStatus.SC_NOT_FOUND) {
+                                    clearStoredOrder();
+                                }
+                            }
+
                             showToastError(error);
                         }
                     });
@@ -721,8 +733,6 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             }
         });
     }
-
-
 
     public enum ButtonType {
         Place, Cancel
@@ -976,6 +986,19 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     }
 
     private Marker updateMarker(Marker marker, LatLng location, String title, int iconId, boolean animateEnabled ){
+        if (marker == null){
+
+            MarkerOptions markerOpts = new MarkerOptions()
+                    .position(location)
+                    .icon(BitmapDescriptorFactory.fromResource(iconId))
+                    .title(title);
+
+            marker = mMap.addMarker(markerOpts);
+
+        } else {
+            marker.setTitle(title);
+        }
+        marker.showInfoWindow();
         if(animateEnabled) {
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
 
@@ -986,21 +1009,9 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                             //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
                     .build();                   // Creates a CameraPosition from the builder
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-        }
-        if (marker == null){
-
-            MarkerOptions markerOpts = new MarkerOptions()
-                    .position(location)
-                    .icon(BitmapDescriptorFactory.fromResource(iconId))
-                    .title(title);
-
-            marker = mMap.addMarker(markerOpts);
-            animateMarker(marker, location, false);
-        } else {
-            marker.setTitle(title);
             animateMarker(marker, location, false);
         }
-        marker.showInfoWindow();
+
         return marker;
     }
 
@@ -1140,6 +1151,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                     Toast.makeText(context, R.string.location_not_found, Toast.LENGTH_LONG).show();
                 }
 
+
                 if (addressTag == Constants.START_TAG){
                     startGroup.setVisibility(View.VISIBLE);
                 }
@@ -1149,6 +1161,31 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             }
 
         }
+    }
+
+    public static void showAlertDialog(int title, int message, final Context context) {
+
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
+
+        alertDialog.setTitle(title);
+
+        alertDialog.setMessage(message);
+
+        alertDialog.setPositiveButton("Ok",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                       dialog.dismiss();
+                    }
+                });
+
+        alertDialog.setNegativeButton("Cancel",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+        alertDialog.show();
     }
 
 }

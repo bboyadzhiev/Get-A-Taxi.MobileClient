@@ -120,7 +120,7 @@ public class SignalRTrackingService extends Service {
 
                 if (!notificationHasBeenSent && taxiHasArrived()) {
                     Log.d(TAG, "Sending notification");
-                    broadcastIntent = new Intent(Constants.TAXI_HAS_ARRIVED_NOTIFY_BC);
+                    broadcastIntent = new Intent(Constants.HUB_TAXI_HAS_ARRIVED_NOTIFY_BC);
                     sendOrderedBroadcast(broadcastIntent, null);
 
                 }
@@ -136,7 +136,7 @@ public class SignalRTrackingService extends Service {
             @Override
             public void run(Integer taxiId, String plate) {
                 Log.d(TAG, Constants.HUB_TAXI_ASSIGNED);
-                broadcastIntent = new Intent(Constants.TAXI_WAS_ASSIGNED_NOTIFY_BC);
+                broadcastIntent = new Intent(Constants.HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC);
                 broadcastIntent.putExtra(Constants.HUB_ASSIGNED_TAXI_ID, taxiId);
                 broadcastIntent.putExtra(Constants.HUB_ASSIGNED_TAXI_PLATE, plate);
                 // for NotificationsReceiver
@@ -148,7 +148,7 @@ public class SignalRTrackingService extends Service {
             @Override
             public void run(Integer orderId) {
                 Log.d(TAG, Constants.HUB_ORDER_STATUS_CHANGED);
-                broadcastIntent = new Intent(Constants.ORDER_STATUS_CHANGED_BC);
+                broadcastIntent = new Intent(Constants.HUB_ORDER_STATUS_CHANGED_BC);
                 broadcastIntent.putExtra(Constants.ORDER_ID, orderId);
                 sendBroadcast(broadcastIntent);
             }
