@@ -386,7 +386,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
                         if (existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()
                                 || existingOrderDM.status == Constants.OrderStatus.Waiting.getValue()) {
-                            if(!existingOrderDM.destinationAddress.isEmpty()){
+                            if(existingOrderDM.destinationAddress != null){
                                 destinationAddressEditText.setText(existingOrderDM.destinationAddress);
                             }
                             destinationGroup.setVisibility(View.VISIBLE);
@@ -447,7 +447,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
                         if (existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()
                                 || existingOrderDM.status == Constants.OrderStatus.Waiting.getValue()) {
-                            if(!existingOrderDM.destinationAddress.isEmpty()){
+                            if(existingOrderDM.destinationAddress != null){
                                 destinationAddressEditText.setText(existingOrderDM.destinationAddress);
                             }
                             destinationGroup.setVisibility(View.VISIBLE);
@@ -605,24 +605,22 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     }
 
     private boolean showToastError(RetrofitError error) {
-        if(error.getResponse() != null) {
-            if (error.getResponse().getBody() != null) {
-                String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-                if(!json.isEmpty()){
-                    JsonObject jobj = new Gson().fromJson(json, JsonObject.class);
-                    String message = jobj.get("Message").getAsString();
-                    Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-                    // There was a message from the server
-                    return true;
-                } else {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                }
+        Response response = error.getResponse();
+        if (response != null && response.getBody() != null) {
+            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+            if(!json.isEmpty()){
+                JsonObject jobj = new Gson().fromJson(json, JsonObject.class);
+                String message = jobj.get("Message").getAsString();
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                // There was a message from the server
+                return true;
             } else {
                 Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
             }
         } else {
             Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
         }
+
         return false;
     }
 

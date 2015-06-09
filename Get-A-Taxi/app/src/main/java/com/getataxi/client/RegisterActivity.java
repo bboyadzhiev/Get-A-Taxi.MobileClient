@@ -24,6 +24,8 @@ import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.UserPreferencesManager;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import org.apache.http.HttpStatus;
 
@@ -102,7 +104,12 @@ public class RegisterActivity extends ActionBarActivity{
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.register_action_goto_login) {
+            gotoLoginActivity();
+            return true;
+        }
+        if(id == R.id.register_action_exit) {
+            finish();
             return true;
         }
 
@@ -181,18 +188,18 @@ public class RegisterActivity extends ActionBarActivity{
     }
 
     private void showToastError(RetrofitError error) {
-        if(error.getResponse() != null) {
-            if (error.getResponse().getBody() != null) {
-                String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-                if(!json.isEmpty()){
-                    Toast.makeText(context, json, Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            }else {
+        Response response = error.getResponse();
+        if (response != null && response.getBody() != null) {
+            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+            if(!json.isEmpty()){
+                JsonObject jobj = new Gson().fromJson(json, JsonObject.class);
+                String message = jobj.get("Message").getAsString();
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                //Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+            } else {
                 Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
             }
-        } else {
+        }else {
             Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
