@@ -120,11 +120,13 @@ public class SignalRTrackingService extends Service {
                 taxiLocation.setLatitude(lat);
                 taxiLocation.setLongitude(lon);
 
-                if (!notificationHasBeenSent && taxiHasArrived()) {
-                    Log.d(TAG, "Sending notification");
-                    Intent notify = new Intent(Constants.HUB_TAXI_HAS_ARRIVED_NOTIFY_BC);
-                    sendOrderedBroadcast(notify, null);
-
+                if (!notificationHasBeenSent) {
+                    if( taxiHasArrived()) {
+                        Log.d(TAG, "Sending notification");
+                        Intent notify = new Intent(Constants.HUB_TAXI_HAS_ARRIVED_NOTIFY_BC);
+                        sendOrderedBroadcast(notify, null);
+                        notificationHasBeenSent = true;
+                    }
                 }
 
                 broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED_BC);
