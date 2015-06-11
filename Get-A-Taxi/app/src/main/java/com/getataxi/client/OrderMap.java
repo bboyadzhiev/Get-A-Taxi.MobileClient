@@ -212,9 +212,9 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                     currentAddressMarkerTitle =  getResources().getString(R.string.looking_up_location);
                 }
 
-                updateClientMarkers(currentAddressMarkerTitle, !inActiveOrder, false);
+                updateClientMarkers(currentAddressMarkerTitle, true, false);
 
-            } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED_BC)){
+            } else if(action.equals(Constants.HUB_UPDATE_TAXI_LOCATION_BC)){
                 // Taxi location change
 
                 // Checking if we have any order data
@@ -228,7 +228,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 LatLng latLng =  new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
 
                 if(placedOrderDetailsDM.taxiId == -1){
-                    // Don't know the taxi details
+                    // Don't know the taxi details yet
                     markerTitle = getResources().getString(R.string.getting_details_txt);
                     // Try to get the assigned order details
                     updateActiveOrderDetails();
@@ -241,16 +241,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                     );
                 } else {
                     // Taxi details available, updating marker
-                    markerTitle = placedOrderDetailsDM.taxiPlate + " - " + placedOrderDetailsDM.driverName;
-                    if(placedOrderDetailsDM.status == Constants.OrderStatus.Waiting.getValue() || placedOrderDetailsDM.status == Constants.OrderStatus.InProgress.getValue()) {
-                        taxiLocationMarker = updateMarker(
-                                taxiLocationMarker,
-                                latLng,
-                                markerTitle,
-                                R.drawable.taxi,
-                                true, false
-                        );
-                    }
+                    updateTaxiMarkerDetailsFromOrder(latLng);
                 }
 
 
@@ -270,6 +261,20 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             }
         }
     };
+
+    private void updateTaxiMarkerDetailsFromOrder(LatLng latLng) {
+        String markerTitle;
+        markerTitle = placedOrderDetailsDM.taxiPlate + " - " + placedOrderDetailsDM.driverName;
+        if(placedOrderDetailsDM.status == Constants.OrderStatus.Waiting.getValue() || placedOrderDetailsDM.status == Constants.OrderStatus.InProgress.getValue()) {
+            taxiLocationMarker = updateMarker(
+                    taxiLocationMarker,
+                    latLng,
+                    markerTitle,
+                    R.drawable.taxi,
+                    true, false
+            );
+        }
+    }
 
     // ACTIVITY LIFECYCLE
     /**
@@ -324,8 +329,9 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         // Register for Location Service broadcasts
         filter.addAction(Constants.LOCATION_UPDATED);
         // And peer location change
-        filter.addAction(Constants.HUB_PEER_LOCATION_CHANGED_BC);
+        filter.addAction(Constants.HUB_UPDATE_TAXI_LOCATION_BC);
         filter.addAction(Constants.HUB_ORDER_STATUS_CHANGED_BC);
+        filter.addAction(Constants.HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC);
         registerReceiver(locationReceiver, filter);
 
         mResultReceiver = new GeocodeResultReceiver(new Handler());
@@ -401,14 +407,18 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
                         if (existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()
                                 || existingOrderDM.status == Constants.OrderStatus.Waiting.getValue()) {
+                            updatePlacedOrderDM(existingOrderDM);
                             if(existingOrderDM.destinationAddress != null){
                                 destinationAddressEditText.setText(existingOrderDM.destinationAddress);
                             }
                             destinationGroup.setVisibility(View.VISIBLE);
                             if(existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()){
                                 cleanTaxiMarkerAndLocations();
+                            } else if(taxiLocation != null){
+                                LatLng latLng =  new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
+                                updateTaxiMarkerDetailsFromOrder(latLng);
                             }
-                            updatePlacedOrderDM(existingOrderDM);
+
                             updateClientMarkers("Ordered at:" + existingOrderDM.orderAddress, true, false);
                         }
                     } catch (IllegalStateException e) {

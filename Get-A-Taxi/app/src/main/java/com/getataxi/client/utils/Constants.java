@@ -23,12 +23,19 @@ public final class Constants {
     public static final String HUB_PROXY = "trackingHub";
     public static final String HUB_CONNECT = "Open";
     public static final String HUB_DISCONNECT = "Close";
-    public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
-    public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
+
+    // Incoming
+    public static final String HUB_UPDATE_TAXI_LOCATION = "updateTaxiLocation";
     public static final String HUB_TAXI_ASSIGNED = "taxiAssigned";
+
+    // Outgoing
+    public static final String HUB_CLIENT_LOCATION_CHANGED = "clientLocationChanged";
+
+    // Bi-directional
     public static final String HUB_ORDER_STATUS_CHANGED = "orderStatusChanged";
+
     // Hub broadcasts
-    public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
+    public static final String HUB_UPDATE_TAXI_LOCATION_BC = PACKAGE_NAME + HUB_UPDATE_TAXI_LOCATION;
     public static final String HUB_ORDER_STATUS_CHANGED_BC = PACKAGE_NAME + "HUB_ORDER_STATUS_CHANGED_BC";
     public static final String HUB_TAXI_HAS_ARRIVED_NOTIFY_BC = PACKAGE_NAME + ".HUB_TAXI_HAS_ARRIVED_NOTIFY_BC" ;
     public static final String HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC = PACKAGE_NAME + ".HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC" ;

@@ -49,9 +49,11 @@ public class NotificationsReceiver extends BroadcastReceiver {
             Notification note = new Notification(R.drawable.taxi,
                     title,
                     System.currentTimeMillis());
+            Intent notifyIntent = new Intent(context, OrderMap.class);
             PendingIntent i = PendingIntent.getActivity(context, 0,
-                    new Intent(context, OrderMap.class),
+                    notifyIntent,
                     0);
+
 
             note.setLatestEventInfo(context, title, subtitle, i);
 

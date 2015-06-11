@@ -112,10 +112,10 @@ public class SignalRTrackingService extends Service {
 //        }, String.class);
 
         Log.d(TAG, "registering callback");
-        proxy.on(Constants.HUB_PEER_LOCATION_CHANGED, new SubscriptionHandler2<Double, Double>() {
+        proxy.on(Constants.HUB_UPDATE_TAXI_LOCATION, new SubscriptionHandler2<Double, Double>() {
             @Override
             public void run(Double lat, Double lon) {
-                Log.d(TAG, Constants.HUB_PEER_LOCATION_CHANGED);
+                Log.d(TAG, Constants.HUB_UPDATE_TAXI_LOCATION);
                 taxiLocation = new Location("void");
                 taxiLocation.setLatitude(lat);
                 taxiLocation.setLongitude(lon);
@@ -129,7 +129,7 @@ public class SignalRTrackingService extends Service {
                     }
                 }
 
-                broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED_BC);
+                broadcastIntent = new Intent(Constants.HUB_UPDATE_TAXI_LOCATION_BC);
                 broadcastIntent.putExtra(Constants.LOCATION, taxiLocation);
                 sendBroadcast(broadcastIntent);
 
@@ -184,6 +184,7 @@ public class SignalRTrackingService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        proxy.invoke(Constants.HUB_DISCONNECT);
         connection.stop();
         unregisterReceiver(locationReceiver);
     }
@@ -216,8 +217,8 @@ public class SignalRTrackingService extends Service {
                 double lon = myLocation.getLongitude();
 
                 if ( proxy != null && orderId != -1){
-                    Log.d(TAG, Constants.HUB_MY_LOCATION_CHANGED);
-                    proxy.invoke(Constants.HUB_MY_LOCATION_CHANGED, orderId, lat, lon);
+                    Log.d(TAG, Constants.HUB_CLIENT_LOCATION_CHANGED);
+                    proxy.invoke(Constants.HUB_CLIENT_LOCATION_CHANGED, orderId, lat, lon);
                 }
 
             }
