@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 
 import com.getataxi.client.OrderMap;
@@ -37,6 +38,8 @@ public class NotificationsReceiver extends BroadcastReceiver {
                     new Intent(context, OrderMap.class),
                     0);
 
+            note.defaults |= Notification.DEFAULT_SOUND;
+            note.defaults |= Notification.DEFAULT_VIBRATE;
             note.setLatestEventInfo(context, title, subtitle, i);
 
             mgr.notify(TAXI_ASSIGNMENT_ID, note);
@@ -54,6 +57,9 @@ public class NotificationsReceiver extends BroadcastReceiver {
                     notifyIntent,
                     0);
 
+            note.sound = Uri.parse("android.resource://"
+                    + context.getPackageName() + "/" + R.raw.taxi_arrived);
+            note.defaults |= Notification.DEFAULT_VIBRATE;
 
             note.setLatestEventInfo(context, title, subtitle, i);
 

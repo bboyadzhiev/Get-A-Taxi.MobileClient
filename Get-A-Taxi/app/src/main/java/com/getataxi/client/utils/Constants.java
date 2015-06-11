@@ -103,7 +103,8 @@ public final class Constants {
     public static final String LAST_ORDER_ID = PACKAGE_NAME + ".lastOrderId";
     public static final String TRACKING_ENABLED = PACKAGE_NAME + "trackingEnabled";
 
-    public static final float ARRIVAL_DISTANCE_THRESHOLD = 50; // meters
+    public static final float TAXI_ARRIVAL_DISTANCE_THRESHOLD = 50; // meters
+    public static final float REVERSE_GEOCODE_DISTANCE_THRESHOLD = 30; //meters
 
     // UI - no UI strings should be here!
 

@@ -9,4 +9,5 @@
     <string name="order_cancelled_toast">Order cancelled!</string>
     <string name="getting_details_txt">Getting details…</string>
     <string name="last_order_not_found_toast">Last order was not found! Please order again!</string>
+    <string name="order_cancelled_already">Your order was cancelled in the system!</string>
 </resources>

@@ -173,7 +173,7 @@ public class SignalRTrackingService extends Service {
         if (myLocation != null && taxiLocation != null) {
             float distance = taxiLocation.distanceTo(myLocation);
 
-            if (distance <= Constants.ARRIVAL_DISTANCE_THRESHOLD) {
+            if (distance <= Constants.TAXI_ARRIVAL_DISTANCE_THRESHOLD) {
                 Log.d(TAG, "TAXI HAS ARRIVED");
                 return true;
             }

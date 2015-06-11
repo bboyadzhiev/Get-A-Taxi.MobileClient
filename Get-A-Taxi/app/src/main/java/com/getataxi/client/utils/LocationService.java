@@ -28,8 +28,6 @@ public class LocationService extends Service
     public ClientLocationListener listener;
     public Location previousBestLocation = null;
 
-    private String reportLocationTitle;
-
     Intent broadcastIntent;
 
     @Override
@@ -61,9 +59,6 @@ public class LocationService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-
-        Bundle b = intent.getExtras();
-        reportLocationTitle = b.getString(Constants.LOCATION_REPORT_TITLE, "Unknown");
 
         return Service.START_NOT_STICKY;
     }
@@ -163,29 +158,6 @@ public class LocationService extends Service
             }
         }
 
-        /**
-         * Updates client location using the WebAPI backend
-         * Replaced with a SignalRTrackingService with a location broadcast receiver
-         * @param loc
-         */
-        @Deprecated
-        private void updateUserLocationRest(Location loc) {
-            LocationDM locationDM = new LocationDM();
-            locationDM.latitude = loc.getLatitude();
-            locationDM.longitude = loc.getLongitude();
-            locationDM.title = reportLocationTitle;
-            RestClientManager.updateClientLocation(locationDM, getApplicationContext(), new Callback<LocationDM>() {
-                @Override
-                public void success(LocationDM locationDM, Response response) {
-                    Log.d(TAG, "SUCCESS_UPDATING_LOCATION");
-                }
-
-                @Override
-                public void failure(RetrofitError error) {
-                    Log.d(TAG, "ERROR_UPDATING_LOCATION");
-                }
-            });
-        }
 
         public void onProviderDisabled(String provider)
         {
