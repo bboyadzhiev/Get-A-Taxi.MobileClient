@@ -105,6 +105,7 @@ public final class Constants {
 
     public static final float TAXI_ARRIVAL_DISTANCE_THRESHOLD = 50; // meters
     public static final float REVERSE_GEOCODE_DISTANCE_THRESHOLD = 30; //meters
+    public static final String LOCATION_FAVORITE = ".LOCATION_FAVORITE";
 
     // UI - no UI strings should be here!
 

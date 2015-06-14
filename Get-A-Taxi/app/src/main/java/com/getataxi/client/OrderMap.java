@@ -420,6 +420,8 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
                             updateClientMarkers("Ordered at:" + existingOrderDM.orderAddress, true, false);
                         }
+
+                        invalidateOptionsMenu();
                     } catch (IllegalStateException e) {
                         e.printStackTrace();
                     } finally {
@@ -486,6 +488,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                             initiateTracking(activeOrderId);
                         }
 
+                        invalidateOptionsMenu();
 
                     } catch (IllegalStateException e) {
                         e.printStackTrace();
@@ -873,6 +876,14 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         } else {
             menu.findItem(R.id.tracking_location_cb).setChecked(false);
         }
+
+        if(!inActiveOrder){
+            menu.findItem(R.id.select_start_location).setEnabled(true);
+            menu.findItem(R.id.select_destination_location).setEnabled(true);
+        } else {
+            menu.findItem(R.id.select_start_location).setEnabled(false);
+            menu.findItem(R.id.select_destination_location).setEnabled(false);
+        }
         return true;
     }
 
@@ -961,11 +972,26 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     public void onLocationSelect(DialogFragment dialog, LocationDM locationDM) {
         // Location has been selected
         String tag = dialog.getTag();
-        if (tag.equals(destinationDialogTag)){
+        if(!inActiveOrder) {
+            if (tag.equals(destinationDialogTag)) {
+                destinationAddressEditText.setText(locationDM.address);
+                destinationAddress = locationDM.address;
+                destinationLocation = new Location(Constants.LOCATION_FAVORITE);
+                destinationLocation.setLatitude(locationDM.latitude);
+                destinationLocation.setLongitude(locationDM.longitude);
 
-        }
-        if (tag.equals(startDialogTag)){
+            }
+            if (tag.equals(startDialogTag)) {
+                if(clientUpdatedLocation == null) {
+                    currentAddress = locationDM.address;
+                    startAddressEditText.setText(locationDM.address);
+                    clientLocation = new Location(Constants.LOCATION_FAVORITE);
+                    clientLocation.setLatitude(locationDM.latitude);
+                    clientLocation.setLongitude(locationDM.longitude);
 
+                }
+            }
+            updateClientMarkers(locationDM.address, true, true);
         }
         dialog.dismiss();
 
@@ -1204,7 +1230,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         updateMarker(clientLocationMarker, latLng, resultAddress, R.drawable.person, true, true);
 
                         String addressLines[] = resultAddress.split("\\r?\\n");
-                        currentAddress = resultAddress;
+                        //currentAddress = resultAddress;
 
                         lastReverseGeocodedLocation = clientLocation;
 
