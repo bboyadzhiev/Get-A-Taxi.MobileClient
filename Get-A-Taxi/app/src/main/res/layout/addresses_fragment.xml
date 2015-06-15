@@ -26,6 +26,13 @@
             android:id="@+id/startAddress_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/startAddFavorite_btn"
+            android:layout_toStartOf="@+id/startAddFavorite_btn"
+            />
+        <ImageButton
+            android:id="@+id/startAddFavorite_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             />
     </RelativeLayout>
@@ -49,6 +56,13 @@
 
         <ImageButton
             android:id="@+id/destinationAddress_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/destinationAddFavorite_btn"
+            android:layout_toStartOf="@+id/destinationAddFavorite_btn"
+            />
+        <ImageButton
+            android:id="@+id/destinationAddFavorite_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"

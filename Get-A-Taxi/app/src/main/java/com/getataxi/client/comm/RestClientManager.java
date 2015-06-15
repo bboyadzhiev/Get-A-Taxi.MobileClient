@@ -117,7 +117,7 @@ public class RestClientManager {
         locationsApi.updateLocation(locationDM, callback);
     }
 
-    public static void addLocation(final LocationDM locationDM, Context context, Callback<LocationDM> callback){
+    public static void addLocation(LocationDM locationDM, Context context, Callback<LocationDM> callback){
         List<NameValuePair> heads = new ArrayList<>();
         heads.addAll(getAuthorisationHeaders(context));
         LocationsAPI locationsApi = client.getLocationsService(heads);

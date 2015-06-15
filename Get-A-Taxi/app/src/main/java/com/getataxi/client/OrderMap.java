@@ -26,6 +26,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,6 +38,7 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.getataxi.client.comm.RestClient;
 import com.getataxi.client.comm.RestClientManager;
 import com.getataxi.client.comm.SignalRTrackingService;
 import com.getataxi.client.comm.dialogs.SelectLocationDialogFragment;
@@ -92,7 +94,9 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     private EditText startAddressEditText;
     private EditText destinationAddressEditText;
     private ImageButton startAddressButton;
+    private ImageButton startFavoriteButton;
     private ImageButton destinationAddressButton;
+    private ImageButton destinationFavoriteButton;
     private SelectLocationDialogFragment locationDialog;
     private View mProgressView;
 
@@ -377,7 +381,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                                 || existingOrderDM.status == Constants.OrderStatus.Cancelled.getValue()) {
                             //cleanup order details
                             clientUpdatedLocation = null;
-                            if(taxiLocation != null) clientLocation = taxiLocation;
+                            if (taxiLocation != null) clientLocation = taxiLocation;
                             clearStoredOrder();
                             removeAddressesInputs();
                             //destinationGroup.setVisibility(View.VISIBLE);
@@ -390,7 +394,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                                     markerTitle,
                                     R.drawable.person,
                                     true,
-                                    false );
+                                    false);
 
                         }
 
@@ -407,14 +411,12 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         if (existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()
                                 || existingOrderDM.status == Constants.OrderStatus.Waiting.getValue()) {
                             updatePlacedOrderDM(existingOrderDM);
-                            if(existingOrderDM.destinationAddress != null){
-                                destinationAddressEditText.setText(existingOrderDM.destinationAddress);
-                            }
-                            destinationGroup.setVisibility(View.VISIBLE);
-                            if(existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()){
+
+                            favoriteAddressesInputs(existingOrderDM);
+                            if (existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()) {
                                 cleanTaxiMarkerAndLocations();
-                            } else if(taxiLocation != null){
-                                LatLng latLng =  new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
+                            } else if (taxiLocation != null) {
+                                LatLng latLng = new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
                                 updateTaxiMarkerDetailsFromOrder(latLng);
                             }
 
@@ -673,8 +675,13 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
         startAddressButton = (ImageButton) findViewById(R.id.startAddress_btn);
         startAddressButton.setImageDrawable(searchDrawable);
+        startFavoriteButton = (ImageButton) findViewById(R.id.startAddFavorite_btn);
+        startFavoriteButton.setImageDrawable(addToLocationsDrawable);
+
         destinationAddressButton = (ImageButton) findViewById(R.id.destinationAddress_btn);
         destinationAddressButton.setImageDrawable(searchDrawable);
+        destinationFavoriteButton = (ImageButton) findViewById(R.id.destinationAddFavorite_btn);
+        destinationFavoriteButton.setImageDrawable(addToLocationsDrawable);
 
         startAddressButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -693,6 +700,34 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 String destinationAddress = destinationAddressEditText.getText().toString();
                 if (!destinationAddress.isEmpty()) {
                     initiateGeocode(destinationAddress, Constants.DESTINATION_TAG);
+                }
+            }
+        });
+
+        startFavoriteButton.setEnabled(false);
+        startFavoriteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!currentAddress.isEmpty() && clientLocation != null) {
+                    LocationDM favoriteLocation = new LocationDM();
+                    favoriteLocation.address = currentAddress;
+                    favoriteLocation.latitude = clientLocation.getLatitude();
+                    favoriteLocation.longitude = clientLocation.getLongitude();
+                    enterAddressTitle(favoriteLocation);
+                }
+            }
+        });
+
+        destinationFavoriteButton.setEnabled(false);
+        destinationFavoriteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!destinationAddress.isEmpty() && destinationLocation != null){
+                    LocationDM favoriteLocation = new  LocationDM();
+                    favoriteLocation.address = destinationAddress;
+                    favoriteLocation.latitude = destinationLocation.getLatitude();
+                    favoriteLocation.longitude = destinationLocation.getLongitude();
+                    enterAddressTitle(favoriteLocation);
                 }
             }
         });
@@ -807,11 +842,85 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         });
     }
 
+    private void addFavoriteLocation(LocationDM location) {
+        showProgress(true);
+        RestClientManager.addLocation(location, context, new Callback<LocationDM>() {
+            @Override
+            public void success(LocationDM locationDM, Response response) {
+                int status = response.getStatus();
+                showProgress(false);
+                if (status == HttpStatus.SC_OK) {
+                    String storedAddressOK =  String.format(getResources().getString(R.string.favorite_stored_successfully),
+                            locationDM.title);
+                    Toast.makeText(context, storedAddressOK, Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                if (status == HttpStatus.SC_BAD_REQUEST) {
+                    Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                    return;
+                }
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                showProgress(false);
+                showToastError(error);
+            }
+        });
+    }
+
     private void removeAddressesInputs(){
         destinationAddressEditText.setText("");
         destinationGroup.setVisibility(View.INVISIBLE);
         startAddressEditText.setText("");
         startGroup.setVisibility(View.INVISIBLE);
+    }
+
+    private void favoriteAddressesInputs(OrderDetailsDM existingOrderDM){
+        if (existingOrderDM.destinationAddress != null) {
+            destinationAddressEditText.setText(existingOrderDM.destinationAddress);
+            destinationGroup.setVisibility(View.VISIBLE);
+            destinationAddressButton.setVisibility(View.INVISIBLE);
+            destinationFavoriteButton.setVisibility(View.VISIBLE);
+        } else {
+            destinationGroup.setVisibility(View.INVISIBLE);
+        }
+        destinationAddressEditText.setEnabled(false);
+
+        startAddressEditText.setEnabled(false);
+        startAddressButton.setVisibility(View.INVISIBLE);
+        startFavoriteButton.setVisibility(View.VISIBLE);
+    }
+
+    private void enterAddressTitle(final LocationDM favoriteLocation){
+        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+        final LayoutInflater inflater = getLayoutInflater();
+        final View myView = inflater.inflate(R.layout.dialog_address_title, null);
+        dialog.setTitle(R.string.dialog_title_favorite_address);
+        dialog.setMessage(R.string.enter_favorite_address_msg);
+
+        dialog.setView(myView);
+        EditText input = (EditText) myView.findViewById(R.id.enter_address_title);
+        input.setText(favoriteLocation.address);
+        dialog.setPositiveButton("OK",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                       addFavoriteLocation(favoriteLocation);
+                    }
+        });
+
+        dialog.setNegativeButton("Cancel",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+        dialog.create().show();
+
     }
 
     public enum ButtonType {

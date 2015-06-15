@@ -13,5 +13,9 @@
     <string name="taxi_has_arrived">Your taxi has arrived</string>
     <string name="taxi_was_assigned">Taxi has been assigned for you!</string>
     <string name="see_map">Open the map!</string>
+    <string name="enter_address_title_txt">Enter favorite address titile</string>
+    <string name="dialog_title_favorite_address">Add favorite address</string>
+    <string name="enter_favorite_address_msg">Set the short title of your favorite location</string>
+    <string name="favorite_stored_successfully">Address %1$s stored successfully!</string>
 
 </resources>
