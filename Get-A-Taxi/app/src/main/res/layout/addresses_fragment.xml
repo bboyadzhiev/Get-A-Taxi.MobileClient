@@ -68,5 +68,20 @@
             android:layout_alignParentRight="true"
             />
     </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/commentGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/destinationGroup"
+        >
+        <EditText
+            android:id="@+id/commentEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/enter_comment"
+            android:layout_alignParentTop="true"
+            android:background="@color/background_material_light"
+            />
+    </RelativeLayout>
 
 </RelativeLayout>

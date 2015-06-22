@@ -12,6 +12,7 @@
     <string name="stored_location_btn_txt">...</string>
     <string name="enter_current_address">Enter current address</string>
     <string name="enter_destination_address">Enter destination address</string>
+    <string name="enter_comment">Enter comment</string>
     <string name="address_found">Address located successfully!</string>
     <string name="location_found">Your location was found!</string>
     <string name="service_not_available">Address fetching service unavailable!</string>
