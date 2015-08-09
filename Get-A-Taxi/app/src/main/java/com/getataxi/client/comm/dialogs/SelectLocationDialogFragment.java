@@ -6,12 +6,18 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import com.getataxi.client.R;
 import com.getataxi.client.comm.models.LocationDM;
+import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.LocationListViewAdapter;
 import com.getataxi.client.utils.UserPreferencesManager;
 
+import org.parceler.Parcels;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,7 +51,10 @@ public class SelectLocationDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.select_location);
-        final List<LocationDM> locations = UserPreferencesManager.loadLocations(getActivity());
+        Bundle bundle = this.getArguments();
+        Parcelable wrapped = bundle.getParcelable(Constants.USER_LOCATIONS);
+        final ArrayList<LocationDM> locations = Parcels.unwrap(wrapped);
+        //final List<LocationDM> locations =  UserPreferencesManager.loadLocations(getActivity());
         if(locations != null) {
         final LocationListViewAdapter adapter = new LocationListViewAdapter(getActivity(), R.layout.location_list_item ,locations);
 

@@ -11,16 +11,8 @@
         android:visible="false"
         android:orderInCategory="99"
         app:showAsAction="never" />
-    <item android:id="@+id/enter_custom_locations"
-        android:title="@string/enter_custom_location"
-        android:orderInCategory="99"
-        app:showAsAction="never" />
     <item android:id="@+id/select_destination_location"
         android:title="@string/select_destination_location"
-        android:orderInCategory="99"
-        app:showAsAction="never" />
-    <item android:id="@+id/select_start_location"
-        android:title="@string/select_start_location"
         android:orderInCategory="99"
         app:showAsAction="never" />
     <item android:id="@+id/tracking_location_cb"

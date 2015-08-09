@@ -346,6 +346,8 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         if(taxiStandDMs == null){
             taxiStandDMs = new ArrayList<>();
         }
+
+        favLocations = UserPreferencesManager.loadLocations(context);
     }
 
     @Override
@@ -484,7 +486,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         if (existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()
                                 || existingOrderDM.status == Constants.OrderStatus.Waiting.getValue()) {
 
-                            if(existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()){
+                            if (existingOrderDM.status == Constants.OrderStatus.Unassigned.getValue()) {
                                 cleanTaxiMarkerAndLocations();
                             }
                             //destinationGroup.setVisibility(View.VISIBLE);
@@ -681,7 +683,11 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 int status = response.getStatus();
                 showProgress(false);
                 if (status == HttpStatus.SC_OK) {
-                    String storedAddressOK =  String.format(getResources().getString(R.string.favorite_stored_successfully),
+
+                    favLocations.add(locationDM);
+                    UserPreferencesManager.storeLocations(favLocations, context);
+
+                    String storedAddressOK = String.format(getResources().getString(R.string.favorite_stored_successfully),
                             locationDM.title);
                     Toast.makeText(context, storedAddressOK, Toast.LENGTH_LONG).show();
                     return;
@@ -1052,6 +1058,11 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_order, menu);
+        if(lastReverseGeocodedLocation != null) {
+            menu.findItem(R.id.add_to_locations).setVisible(true);
+        } else {
+            menu.findItem(R.id.add_to_locations).setVisible(false);
+        }
         if(UserPreferencesManager.getTrackingState(context)){
             menu.findItem(R.id.tracking_location_cb).setChecked(true);
         } else {
@@ -1059,10 +1070,10 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         }
 
         if(!inActiveOrder){
-            menu.findItem(R.id.select_start_location).setEnabled(true);
+            //menu.findItem(R.id.select_start_location).setEnabled(true);
             menu.findItem(R.id.select_destination_location).setEnabled(true);
         } else {
-            menu.findItem(R.id.select_start_location).setEnabled(false);
+            //menu.findItem(R.id.select_start_location).setEnabled(false);
             menu.findItem(R.id.select_destination_location).setEnabled(false);
         }
         return true;
@@ -1074,6 +1085,17 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+
+        if(id == R.id.add_to_locations){
+            if(lastReverseGeocodedLocation != null){
+                LocationDM favoriteLocation = new  LocationDM();
+                favoriteLocation.address = currentAddress;
+                favoriteLocation.latitude = lastReverseGeocodedLocation.getLatitude();
+                favoriteLocation.longitude = lastReverseGeocodedLocation.getLongitude();
+                enterAddressTitle(favoriteLocation);
+            }
+        }
+
         if (ChooseLocationDialog(id)) return true;
 
         if(id == R.id.tracking_location_cb){
@@ -1099,32 +1121,33 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
     // LOCATIONS DIALOG
     private boolean ChooseLocationDialog(int id) {
-        if (id == R.id.enter_custom_locations) {
-            FragmentManager fm = this.getFragmentManager();
-            fm.beginTransaction()
-                    .setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out)
-                    .show(locationsInputs)
-                    .commit();
-            return true;
-        }
-        if (id == R.id.select_destination_location || id == R.id.select_start_location) {
+//        if (id == R.id.enter_custom_locations) {
+//            FragmentManager fm = this.getFragmentManager();
+//            fm.beginTransaction()
+//                    .setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out)
+//                    .show(locationsInputs)
+//                    .commit();
+//            return true;
+//        }
+        if (id == R.id.select_destination_location) {
             if(favLocations != null && !favLocations.isEmpty()) {
                 Bundle bundle = new Bundle();
                 Parcelable wrapped = Parcels.wrap(favLocations);
                 bundle.putParcelable(Constants.USER_LOCATIONS, wrapped);
                 locationDialog = new SelectLocationDialogFragment();
+
                 FragmentManager fm = this.getFragmentManager();
                 locationDialog.setArguments(bundle);
 
-                if (id == R.id.select_destination_location) {
-                    destinationDialogTag = locationDialog.getTag();
+//                if (id == R.id.select_destination_location) {
+                    destinationDialogTag = getResources().getString(R.string.select_destination_location);//locationDialog.getTag();
                     locationDialog.show(fm, destinationDialogTag);
                     return true;
-                }
+//                }
 
-                startDialogTag = locationDialog.getTag();
-                locationDialog.show(fm, startDialogTag);
-                return true;
+//                startDialogTag = locationDialog.getTag();
+//                locationDialog.show(fm, startDialogTag);
+//                return true;
             } else {
                 Toast.makeText(context, R.string.no_user_locations_toast, Toast.LENGTH_LONG).show();
             }
@@ -1139,13 +1162,6 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
      */
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {
-        String tag = dialog.getTag();
-        if (tag.equals(destinationDialogTag)){
-
-        }
-        if (tag.equals(startDialogTag)){
-
-        }
         dialog.dismiss();
     }
 
@@ -1154,7 +1170,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         // Location has been selected
         String tag = dialog.getTag();
         if(!inActiveOrder) {
-            if (tag.equals(destinationDialogTag)) {
+            if (tag.equals(getResources().getString(R.string.select_destination_location))) {
                 destinationAddressEditText.setText(locationDM.address);
                 destinationAddress = locationDM.address;
                 destinationLocation = new Location(Constants.LOCATION_FAVORITE);
@@ -1162,17 +1178,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                 destinationLocation.setLongitude(locationDM.longitude);
 
             }
-            if (tag.equals(startDialogTag)) {
-                if(clientUpdatedLocation == null) {
-                    currentAddress = locationDM.address;
-                    startAddressEditText.setText(locationDM.address);
-                    clientLocation = new Location(Constants.LOCATION_FAVORITE);
-                    clientLocation.setLatitude(locationDM.latitude);
-                    clientLocation.setLongitude(locationDM.longitude);
-
-                }
-            }
-            updateClientMarkers(locationDM.address, true, true);
+            //updateClientMarkers(locationDM.address, true, true);
         }
         dialog.dismiss();
 
@@ -1415,7 +1421,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
                         //currentAddress = resultAddress;
 
                         lastReverseGeocodedLocation = clientLocation;
-
+                        invalidateOptionsMenu();
                     }
                     // Show a toast message if an address was found.
                     Toast.makeText(context, R.string.address_found, Toast.LENGTH_LONG).show();
