@@ -6,12 +6,14 @@ import android.widget.Toast;
 
 import com.getataxi.client.comm.contracts.ClientOrdersAPI;
 import com.getataxi.client.comm.contracts.LocationsAPI;
+import com.getataxi.client.comm.contracts.PhotosAPI;
 import com.getataxi.client.comm.contracts.TaxiAPI;
 import com.getataxi.client.comm.contracts.TaxiStandsAPI;
 import com.getataxi.client.comm.models.OrderDetailsDM;
 import com.getataxi.client.comm.models.LocationDM;
 import com.getataxi.client.comm.models.LoginUserDM;
 import com.getataxi.client.comm.models.OrderDM;
+import com.getataxi.client.comm.models.PhotoDM;
 import com.getataxi.client.comm.models.RegisterUserDM;
 import com.getataxi.client.comm.models.TaxiDetailsDM;
 import com.getataxi.client.comm.models.TaxiStandDM;
@@ -174,5 +176,34 @@ public class RestClientManager {
         heads.addAll(getAuthorisationHeaders(context));
         TaxiStandsAPI taxiStandsAPI = client.getTaxiStandsService(heads);
         taxiStandsAPI.getTaxiStandsByLocation(lat, lon, callback);
+    }
+
+    //Photos
+    public static void getUserPhoto(Context context, Callback<PhotoDM> callback){
+        List<NameValuePair> heads = new ArrayList<>();
+        heads.addAll(getAuthorisationHeaders(context));
+        PhotosAPI photosAPI = client.getPhotosService(heads);
+        photosAPI.getUserPhoto(callback);
+    }
+
+    public static void getPhoto(int id, Context context, Callback<PhotoDM> callback) {
+        List<NameValuePair> heads = new ArrayList<>();
+        heads.addAll(getAuthorisationHeaders(context));
+        PhotosAPI photosAPI = client.getPhotosService(heads);
+        photosAPI.getPhoto(id, callback);
+    }
+
+    public static void addPhoto(PhotoDM photo, Context context, Callback<Integer> callback) {
+        List<NameValuePair> heads = new ArrayList<>();
+        heads.addAll(getAuthorisationHeaders(context));
+        PhotosAPI photosAPI = client.getPhotosService(heads);
+        photosAPI.addPhoto(photo, callback);
+    }
+
+    public static void updatePhoto(PhotoDM photo, Context context, Callback<Integer> callback) {
+        List<NameValuePair> heads = new ArrayList<>();
+        heads.addAll(getAuthorisationHeaders(context));
+        PhotosAPI photosAPI = client.getPhotosService(heads);
+        photosAPI.updatePhoto(photo, callback);
     }
 }

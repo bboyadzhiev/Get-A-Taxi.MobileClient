@@ -22,8 +22,10 @@
 
     <!-- For getting the phone number -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- For the camera usage, not mandatory -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"></uses-feature>
 
     <application
         android:name="android.support.multidex.MultiDexApplication"
@@ -36,7 +38,7 @@
             android:value="@integer/google_play_services_version" />
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="@string/google_maps_browser_key"/>
+            android:value="@string/google_maps_browser_key" />
 
         <activity
             android:name=".OrderMap"
@@ -45,44 +47,46 @@
         <activity
             android:name=".LoginActivity"
             android:label="@string/title_activity_login"
-            android:windowSoftInputMode="adjustResize|stateVisible"
             android:noHistory="true"
-            >
+            android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
         <activity
             android:name=".RegisterActivity"
             android:label="@string/title_activity_register"
-            android:noHistory="true"
-            >
+            android:noHistory="true" >
         </activity>
         <activity
             android:name=".StartupActivity"
             android:label="@string/title_activity_startup"
-            android:noHistory="true"
-            >
+            android:noHistory="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
             android:name=".utils.LocationService"
-            android:exported="false"
-            />
+            android:exported="false" />
         <service
             android:name=".utils.GeocodeIntentService"
-            android:exported="false"
-            />
+            android:exported="false" />
         <service
             android:name=".comm.SignalRTrackingService"
-            android:exported="false"
-            />
-        <receiver android:name=".utils.NotificationsReceiver">
+            android:exported="false" />
+
+        <receiver android:name=".utils.NotificationsReceiver" >
             <intent-filter>
-                <action android:name= "com.getataxi.client.utils.HUB_TAXI_HAS_ARRIVED_NOTIFY_BC" />
-                <action android:name= "com.getataxi.client.utils.HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC" />
+                <action android:name="com.getataxi.client.utils.HUB_TAXI_HAS_ARRIVED_NOTIFY_BC" />
+                <action android:name="com.getataxi.client.utils.HUB_TAXI_WAS_ASSIGNED_NOTIFY_BC" />
             </intent-filter>
         </receiver>
+
+        <activity
+            android:name=".comm.ProfileActivity"
+            android:label="@string/title_activity_profile" >
+        </activity>
     </application>
 
 </manifest>

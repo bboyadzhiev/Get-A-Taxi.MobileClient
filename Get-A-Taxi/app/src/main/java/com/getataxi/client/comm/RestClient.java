@@ -4,6 +4,7 @@ import com.getataxi.client.comm.contracts.AccountAPI;
 import com.getataxi.client.comm.contracts.ClientOrdersAPI;
 import com.getataxi.client.comm.contracts.LocationsAPI;
 
+import com.getataxi.client.comm.contracts.PhotosAPI;
 import com.getataxi.client.comm.contracts.TaxiAPI;
 import com.getataxi.client.comm.contracts.TaxiStandsAPI;
 import com.getataxi.client.utils.Constants;
@@ -33,6 +34,7 @@ public class RestClient{
     private LocationsAPI locationsService;
     private TaxiAPI taxiService;
     private TaxiStandsAPI taxiStandsService;
+    private PhotosAPI photosService;
     private List<NameValuePair> headers;
 
 
@@ -126,4 +128,13 @@ public class RestClient{
         }
         return taxiStandsService;
     }
+
+    public PhotosAPI getPhotosService(List<NameValuePair> headers){
+        this.headers.clear();
+        if (headers != null) {
+            this.headers = headers;
+        }
+        return photosService;
+    }
+
 }
