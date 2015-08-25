@@ -1,4 +1,4 @@
-package com.getataxi.client.comm;
+package com.getataxi.client;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.getataxi.client.R;
+import com.getataxi.client.comm.RestClientManager;
 import com.getataxi.client.comm.models.PhotoDM;
 import com.getataxi.client.utils.UserPreferencesManager;
 import com.google.android.gms.common.images.ImageManager;

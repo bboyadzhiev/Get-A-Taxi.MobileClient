@@ -84,7 +84,7 @@
         </receiver>
 
         <activity
-            android:name=".comm.ProfileActivity"
+            android:name=".ProfileActivity"
             android:label="@string/title_activity_profile" >
         </activity>
     </application>
