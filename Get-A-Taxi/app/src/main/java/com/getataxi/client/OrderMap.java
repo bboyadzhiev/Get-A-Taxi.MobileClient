@@ -931,7 +931,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
             }
 
             commentGroup.setVisibility(View.VISIBLE);
-            if(!orderDM.userComment.isEmpty()) {
+            if(orderDM.userComment != null && !orderDM.userComment.isEmpty()) {
                 commentEditText.setText(orderDM.userComment);
             }
 
