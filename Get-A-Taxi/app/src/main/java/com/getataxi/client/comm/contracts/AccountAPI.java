@@ -23,4 +23,8 @@ public interface AccountAPI {
 
     @POST("/api/Account/Register")
      void register(@Body RegisterUserDM userInfo, Callback<String> callback);
+
+    @POST("/api/Account/Logout")
+    void logout(Callback<String> callback);
+
 }

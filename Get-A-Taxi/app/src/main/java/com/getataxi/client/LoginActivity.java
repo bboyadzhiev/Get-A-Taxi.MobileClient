@@ -196,7 +196,7 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
 
         // Store values at the time of the login attempt.
         String email = mEmailView.getText().toString();
-        String password = mPasswordView.getText().toString();
+        final String password = mPasswordView.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
@@ -244,7 +244,7 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
                             String welcome = String.format(res.getString(R.string.login_success_message),
                                     responseLoginUserDM.userName);
                             Toast.makeText(context, welcome, Toast.LENGTH_LONG).show();
-                            Thread.sleep(5000);
+                            responseLoginUserDM.password = password;
                             UserPreferencesManager.saveLoginData(responseLoginUserDM, context);
                             showProgress(false);
                             Intent orderMap = new Intent(context, OrderMap.class);
@@ -253,9 +253,6 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
                         } catch (IllegalStateException e) {
                             e.printStackTrace();
                         } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }

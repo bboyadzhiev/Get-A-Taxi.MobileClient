@@ -3,25 +3,24 @@ package com.getataxi.client;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.getataxi.client.R;
 import com.getataxi.client.comm.RestClientManager;
 import com.getataxi.client.comm.models.PhotoDM;
-import com.getataxi.client.utils.UserPreferencesManager;
-import com.google.android.gms.common.images.ImageManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -42,7 +41,9 @@ public class ProfileActivity extends ActionBarActivity {
     private PhotoDM photoModel = null;
     private View mProgressView;
     Button photoChangeButton;
-    Button photoSetButton;
+    Button photoSaveButton;
+    Button photoRemoveButton;
+    TextView photoPlaceholderText;
 
 
     @Override
@@ -62,13 +63,35 @@ public class ProfileActivity extends ActionBarActivity {
             }
         });
 
-        photoSetButton = (Button)this.findViewById(R.id.setPhotoButton);
-        photoSetButton.setOnClickListener(new View.OnClickListener() {
+        photoSaveButton = (Button)this.findViewById(R.id.setPhotoButton);
+        photoSaveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (photoModel != null) {
+                    storePhoto(photoModel);
+                }
             }
         });
+
+        photoRemoveButton = (Button)this.findViewById(R.id.removePhotoButton);
+        photoRemoveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (photoModel != null) {
+                    removePhoto();
+                }
+            }
+        });
+
+        photoPlaceholderText = (TextView) this.findViewById(R.id.photoPlaceholderText);
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        if(photoModel == null){
+            getUserPhoto();
+        }
 
     }
 
@@ -84,13 +107,15 @@ public class ProfileActivity extends ActionBarActivity {
 
             photoModel = new PhotoDM();
             photoModel.extension = "png";
-            photoModel.content = byteArray;
+            photoModel.content = Base64.encodeToString(byteArray, Base64.DEFAULT);
 
-            storePhoto(photoModel);
+            photoSaveButton.setEnabled(true);
+            setButton(PhotoButtonType.SavePhoto);
         }
     }
 
-    private boolean storePhoto(PhotoDM photo) {
+    private void storePhoto(PhotoDM photo) {
+        if(photo == null) return;
         showProgress(true);
         RestClientManager.addPhoto(photo, context, new Callback<Integer>() {
             @Override
@@ -98,7 +123,9 @@ public class ProfileActivity extends ActionBarActivity {
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
                     Toast.makeText(context, context.getResources().getText(R.string.photo_stored_success), Toast.LENGTH_LONG).show();
+                    setButton(PhotoButtonType.RemovePhoto);
                 }
+                showProgress(false);
             }
 
             @Override
@@ -107,7 +134,94 @@ public class ProfileActivity extends ActionBarActivity {
                 showProgress(false);
             }
         });
-        return false;
+    }
+
+    private void getUserPhoto(){
+        showProgress(true);
+        RestClientManager.getUserPhoto(context, new Callback<PhotoDM>() {
+            @Override
+            public void success(PhotoDM photoDM, Response response) {
+                int status = response.getStatus();
+                if (status == HttpStatus.SC_OK) {
+                    photoModel = photoDM;
+                    displayPhoto(photoModel);
+                    setButton(PhotoButtonType.RemovePhoto);
+                }
+                if (status == HttpStatus.SC_NOT_FOUND) {
+                    Toast.makeText(context, context.getResources().getText(R.string.no_photo), Toast.LENGTH_LONG).show();
+                    photoPlaceholderText.setText(context.getResources().getText(R.string.no_photo));
+                    setButton(PhotoButtonType.NoButton);
+                }
+                showProgress(false);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                setButton(PhotoButtonType.NoButton);
+                showToastError(error);
+                showProgress(false);
+            }
+        });
+    }
+
+    private void removePhoto(){
+        if(photoModel == null) return;
+        showProgress(true);
+        RestClientManager.removePhoto(photoModel.photoId, context, new Callback<Integer>() {
+            @Override
+            public void success(Integer integer, Response response) {
+                int status = response.getStatus();
+                if (status == HttpStatus.SC_NOT_FOUND || status == HttpStatus.SC_BAD_REQUEST) {
+                    Toast.makeText(context, context.getResources().getText(R.string.no_photo), Toast.LENGTH_LONG).show();
+                    photoPlaceholderText.setText(context.getResources().getText(R.string.no_photo));
+                }
+                photoModel = null;
+                photoImageView.setImageDrawable(null);
+                setButton(PhotoButtonType.NoButton);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                showToastError(error);
+                showProgress(false);
+            }
+        });
+    }
+
+    private void displayPhoto(PhotoDM photoDM){
+        photoPlaceholderText.setText("");
+        //Bitmap photo = BitmapFactory.decodeByteArray(photoDM.content, 0, photoDM.content.length);
+        byte[] byteArray = photoDM.getImage();
+        Bitmap photo = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+        photoImageView.setImageBitmap(photo);
+    }
+
+    public enum PhotoButtonType {
+       NoButton, SavePhoto, RemovePhoto
+    }
+
+    public void setButton(PhotoButtonType button){
+        switch (button){
+            case SavePhoto: photoSaveButton.setEnabled(true);
+                photoSaveButton.setVisibility(View.VISIBLE);
+                photoRemoveButton.setEnabled(false);
+                photoRemoveButton.setVisibility(View.INVISIBLE);
+                break;
+            case RemovePhoto:
+                photoSaveButton.setEnabled(false);
+                photoSaveButton.setVisibility(View.INVISIBLE);
+                photoRemoveButton.setEnabled(true);
+                photoRemoveButton.setVisibility(View.VISIBLE);
+                break;
+            case NoButton:
+            default:
+                photoSaveButton.setEnabled(false);
+                photoSaveButton.setVisibility(View.INVISIBLE);
+                photoRemoveButton.setEnabled(false);
+                photoRemoveButton.setVisibility(View.INVISIBLE);
+                break;
+        }
+
     }
 
     @Override
@@ -125,7 +239,13 @@ public class ProfileActivity extends ActionBarActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_goto_order) {
+            Intent gotoOrderIntent = new Intent(this, OrderMap.class);
+            startActivity(gotoOrderIntent);
+        }
+
+        if(id == R.id.action_user_exit) {
+            finish();
             return true;
         }
 

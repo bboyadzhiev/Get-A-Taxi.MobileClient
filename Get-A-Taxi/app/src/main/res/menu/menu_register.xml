@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.getataxi.client.RegisterActivity">
     <item android:id="@+id/register_action_goto_login"
-        android:title="@string/action_settings"
+        android:title="@string/title_activity_login"
         android:orderInCategory="99"
         app:showAsAction="never" />
     <item android:id="@+id/register_action_exit"

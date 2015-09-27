@@ -2,7 +2,9 @@
 <resources>
     <string name="title_activity_profile">Profile Settings</string>
     <string name="button_change_photo">Change photo</string>
-    <string name="button_set_photo">Set photo</string>
+    <string name="button_save_photo">Set photo</string>
+    <string name="button_remove_photo">Remove photo</string>
     <string name="action_logout">Logout</string>
     <string name="photo_stored_success">Your photo was stored successfully!</string>
+    <string name="no_photo">You have no photo!</string>
 </resources>

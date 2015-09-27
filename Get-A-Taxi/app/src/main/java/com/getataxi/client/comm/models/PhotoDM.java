@@ -1,5 +1,7 @@
 package com.getataxi.client.comm.models;
 
+import android.util.Base64;
+
 import com.google.gson.annotations.SerializedName;
 
 import org.parceler.Parcel;
@@ -13,8 +15,12 @@ public class PhotoDM {
     public int photoId;
 
     @SerializedName("content")
-    public byte[] content;
+    public String content;
 
-    @SerializedName("extension")
+    @SerializedName("fileExtension")
     public String extension;
+
+    public byte[] getImage() {
+            return Base64.decode(this.content, Base64.DEFAULT);
+    }
 }

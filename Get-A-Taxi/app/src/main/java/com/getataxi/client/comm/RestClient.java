@@ -1,5 +1,6 @@
 package com.getataxi.client.comm;
 
+
 import com.getataxi.client.comm.contracts.AccountAPI;
 import com.getataxi.client.comm.contracts.ClientOrdersAPI;
 import com.getataxi.client.comm.contracts.LocationsAPI;
@@ -7,20 +8,16 @@ import com.getataxi.client.comm.contracts.LocationsAPI;
 import com.getataxi.client.comm.contracts.PhotosAPI;
 import com.getataxi.client.comm.contracts.TaxiAPI;
 import com.getataxi.client.comm.contracts.TaxiStandsAPI;
-import com.getataxi.client.utils.Constants;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.squareup.okhttp.OkHttpClient;
 
 import org.apache.http.NameValuePair;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
-import retrofit.client.OkClient;
 import retrofit.converter.GsonConverter;
 
 /**
@@ -80,6 +77,7 @@ public class RestClient{
         locationsService = restAdapter.create(LocationsAPI.class);
         taxiService = restAdapter.create(TaxiAPI.class);
         taxiStandsService = restAdapter.create(TaxiStandsAPI.class);
+        photosService = restAdapter.create(PhotosAPI.class);
     }
 
     public AccountAPI getAccountService(List<NameValuePair> headers){

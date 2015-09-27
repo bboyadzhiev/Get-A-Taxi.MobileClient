@@ -94,11 +94,17 @@ public class RestClientManager {
     }
 
     public static void login(LoginUserDM loginUserDM, String grantType, Callback<LoginUserDM> callback){
-        client.getAccountService(null).login(loginUserDM.email, loginUserDM.password, grantType,callback);
+        client.getAccountService(null).login(loginUserDM.userName, loginUserDM.password, grantType,callback);
     }
 
-    public static void register(final RegisterUserDM registerUserDM, Callback callback){
+    public static void register(final RegisterUserDM registerUserDM, Callback<String> callback){
         client.getAccountService(null).register(registerUserDM, callback);
+    }
+
+    public static void logout(Context context, Callback<String> callback){
+        List<NameValuePair> heads = new ArrayList<>();
+        heads.addAll(getAuthorisationHeaders(context));
+        client.getAccountService(heads).logout(callback);
     }
 
     // LOCATIONS
@@ -205,5 +211,11 @@ public class RestClientManager {
         heads.addAll(getAuthorisationHeaders(context));
         PhotosAPI photosAPI = client.getPhotosService(heads);
         photosAPI.updatePhoto(photo, callback);
+    }
+    public static void removePhoto(int id, Context context, Callback<Integer> callback) {
+        List<NameValuePair> heads = new ArrayList<>();
+        heads.addAll(getAuthorisationHeaders(context));
+        PhotosAPI photosAPI = client.getPhotosService(heads);
+        photosAPI.deletePhoto(id, callback);
     }
 }

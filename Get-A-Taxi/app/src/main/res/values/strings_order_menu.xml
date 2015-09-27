@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="manage_photo">"Profile photo"</string>
     <string name="add_to_locations">"Add to favorites"</string>
     <string name="tracking_location_txt">Enable tracking</string>
     <string name="tracking_enabled_txt">Tracking enabled!</string>
     <string name="tracking_disabled_txt">Tracking disabled!</string>
+    <string name="please_wait_txt">Please wait!</string>
 </resources>

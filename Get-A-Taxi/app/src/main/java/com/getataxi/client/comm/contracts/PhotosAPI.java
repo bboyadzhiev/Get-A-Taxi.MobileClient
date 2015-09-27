@@ -14,18 +14,18 @@ import retrofit.http.Path;
  * Created by Bobi on 8/12/2015.
  */
 public interface PhotosAPI {
-    @GET("/api/Locations")
+    @GET("/api/Photos")
     void  getUserPhoto(Callback<PhotoDM> callback);
 
-    @GET("/api/Locations/{id}")
+    @GET("/api/Photos/{id}")
     void getPhoto(@Path("id") int id, Callback<PhotoDM> callback);
 
-    @POST("/api/Locations")
+    @POST("/api/Photos")
     void addPhoto(@Body PhotoDM photoDM, Callback<Integer> callback);
 
-    @PUT("/api/Locations")
+    @PUT("/api/Photos")
     void updatePhoto(@Body PhotoDM photoDM, Callback<Integer> callback);
 
-    @DELETE("/api/Locations/{id}")
+    @DELETE("/api/Photos/{id}")
     void deletePhoto(@Path("id") int id, Callback<Integer> callback);
 }

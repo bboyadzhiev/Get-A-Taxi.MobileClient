@@ -6,14 +6,19 @@
     tools:context="com.getataxi.client.OrderMap"
 
     >
+    <item android:id="@+id/manage_profile_photo"
+        android:title="@string/manage_photo"
+        android:visible="true"
+        android:orderInCategory="96"
+        app:showAsAction="never" />
     <item android:id="@+id/add_to_locations"
         android:title="@string/add_to_locations"
         android:visible="false"
-        android:orderInCategory="99"
+        android:orderInCategory="97"
         app:showAsAction="never" />
     <item android:id="@+id/select_destination_location"
         android:title="@string/select_destination_location"
-        android:orderInCategory="99"
+        android:orderInCategory="98"
         app:showAsAction="never" />
     <item android:id="@+id/tracking_location_cb"
         android:title="@string/tracking_location_txt"

@@ -370,7 +370,28 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         // Stop tracking service
         stopTrackingService();
 
+        if(!inActiveOrder){
+            logoutFromSystem();
+        }
+
         unregisterReceiver(locationReceiver);
+    }
+
+    private void logoutFromSystem(){
+        RestClientManager.logout(context,new Callback<String>() {
+            @Override
+            public void success(String s, Response response) {
+                int status  = response.getStatus();
+                if (status == HttpStatus.SC_OK){
+                    UserPreferencesManager.logoutUser(context);
+                }
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                showToastError(error);
+            }
+        });
     }
 
     // BUSINESS LOGIC
@@ -1058,6 +1079,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_order, menu);
+
         if(lastReverseGeocodedLocation != null) {
             menu.findItem(R.id.add_to_locations).setVisible(true);
         } else {
@@ -1071,9 +1093,11 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
 
         if(!inActiveOrder){
             //menu.findItem(R.id.select_start_location).setEnabled(true);
+            menu.findItem(R.id.manage_profile_photo).setEnabled(true);
             menu.findItem(R.id.select_destination_location).setEnabled(true);
         } else {
             //menu.findItem(R.id.select_start_location).setEnabled(false);
+            menu.findItem(R.id.manage_profile_photo).setEnabled(false);
             menu.findItem(R.id.select_destination_location).setEnabled(false);
         }
         return true;
@@ -1085,6 +1109,12 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+
+        if(id==R.id.manage_profile_photo){
+            Intent gotoProfileIntent = new Intent(this, ProfileActivity.class);
+            gotoProfileIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(gotoProfileIntent);
+        }
 
         if(id == R.id.add_to_locations){
             if(lastReverseGeocodedLocation != null){

@@ -82,6 +82,7 @@ public class StartupActivity extends Activity {
         // Check for login credentials
         if(UserPreferencesManager.checkForLoginCredentials(context)){
             LoginUserDM loginUserDM = UserPreferencesManager.getLoginData(context);
+            final String password = loginUserDM.password;
             // Check if still logged-in
             if(UserPreferencesManager.isLoggedIn(context) && !UserPreferencesManager.tokenHasExpired(loginUserDM.expires)){
                 Intent orderMap = new Intent(context, OrderMap.class);
@@ -92,14 +93,14 @@ public class StartupActivity extends Activity {
 
                 RestClientManager.login(loginUserDM, grantType, new Callback<LoginUserDM>() {
                     @Override
-                    public void success(LoginUserDM loginUserDM, Response response) {
+                    public void success(LoginUserDM loginSuccessUserDM, Response response) {
                         int status = response.getStatus();
                         if (status == HttpStatus.SC_OK) {
                             try {
                                 String s = getResources().getString(R.string.token_renew);
-                                Toast.makeText(context, String.format(s, loginUserDM.email), Toast.LENGTH_LONG).show();
-                                UserPreferencesManager.saveLoginData(loginUserDM, context);
-
+                                Toast.makeText(context, String.format(s, loginSuccessUserDM.userName), Toast.LENGTH_LONG).show();
+                                loginSuccessUserDM.password = password;
+                                UserPreferencesManager.saveLoginData(loginSuccessUserDM, context);
                                 Intent orderMap = new Intent(context, OrderMap.class);
                                 orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                                 context.startActivity(orderMap);
