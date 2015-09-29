@@ -162,6 +162,7 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
                 EditText inp = (EditText) myView.findViewById(R.id.base_server_edit_text);
                 String base_url = inp.getText().toString();
                 UserPreferencesManager.setBaseUrl(context, base_url);
+                UserPreferencesManager.clearLoginData(context);
                 RestClientManager.client = new RestClient(UserPreferencesManager.getBaseUrl(context));
             }
         });

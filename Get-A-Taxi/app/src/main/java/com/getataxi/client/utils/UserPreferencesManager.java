@@ -117,7 +117,13 @@ public class UserPreferencesManager {
         return userPrefs.getBoolean(Constants.IS_LOGGED, false);
     }
 
-
+    public static void clearLoginData(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
+        editor.remove(Constants.LOGIN_DATA);
+        editor.putBoolean(Constants.IS_LOGGED, false);
+        editor.commit();
+    }
 
     public static boolean checkForRegistration(Context context){
         SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);

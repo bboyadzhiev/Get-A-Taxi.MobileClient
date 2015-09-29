@@ -609,6 +609,7 @@ public class OrderMap extends ActionBarActivity implements SelectLocationDialogL
         cleanTaxiMarkerAndLocations();
 
         cleanDestinationLocationMarker();
+        invalidateOptionsMenu();
     }
 
     private void cleanDestinationLocationMarker() {

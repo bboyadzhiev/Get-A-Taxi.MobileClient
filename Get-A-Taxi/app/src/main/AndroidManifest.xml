@@ -43,7 +43,6 @@
         <activity
             android:name=".OrderMap"
             android:label="@string/title_activity_order_map"
-            android:noHistory="true"
             >
         </activity>
         <activity
