@@ -147,17 +147,21 @@ public class ProfileActivity extends ActionBarActivity {
                     displayPhoto(photoModel);
                     setButton(PhotoButtonType.RemovePhoto);
                 }
-                if (status == HttpStatus.SC_NOT_FOUND) {
-                    Toast.makeText(context, context.getResources().getText(R.string.no_photo), Toast.LENGTH_LONG).show();
-                    photoPlaceholderText.setText(context.getResources().getText(R.string.no_photo));
-                    setButton(PhotoButtonType.NoButton);
-                }
+
                 showProgress(false);
             }
 
             @Override
             public void failure(RetrofitError error) {
                 setButton(PhotoButtonType.NoButton);
+                Response response = error.getResponse();
+                if(response != null){
+                    int status = response.getStatus();
+                    if (status == HttpStatus.SC_NOT_FOUND) {
+                        Toast.makeText(context, context.getResources().getText(R.string.no_photo), Toast.LENGTH_LONG).show();
+                        photoPlaceholderText.setText(context.getResources().getText(R.string.no_photo));
+                    }
+                }
                 showToastError(error);
                 showProgress(false);
             }

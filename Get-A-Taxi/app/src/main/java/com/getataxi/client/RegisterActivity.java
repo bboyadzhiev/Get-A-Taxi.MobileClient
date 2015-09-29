@@ -25,9 +25,12 @@ import com.getataxi.client.comm.models.RegisterUserDM;
 import com.getataxi.client.utils.Constants;
 import com.getataxi.client.utils.UserPreferencesManager;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import org.apache.http.HttpStatus;
+import org.json.JSONArray;
+import org.parceler.apache.commons.collections.SynchronizedPriorityQueue;
 
 import retrofit.Callback;
 import retrofit.RetrofitError;
@@ -160,11 +163,11 @@ public class RegisterActivity extends ActionBarActivity{
             final RegisterUserDM registerModel = model;
             showProgress(true);
 
-            RestClientManager.register(model,  new Callback<String>() {
+            RestClientManager.register(model, new Callback<String>() {
                 @Override
                 public void success(String s, Response response) {
-                    int status  = response.getStatus();
-                    if (status == HttpStatus.SC_OK){
+                    int status = response.getStatus();
+                    if (status == HttpStatus.SC_OK) {
                         try {
                             showProgress(false);
                             Toast.makeText(context, R.string.successfully_registered_msg, Toast.LENGTH_LONG).show();
@@ -195,7 +198,13 @@ public class RegisterActivity extends ActionBarActivity{
                 JsonObject jobj = new Gson().fromJson(json, JsonObject.class);
                 String message = jobj.get("Message").getAsString();
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-                //Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+                JsonObject modelState = jobj.getAsJsonObject("ModelState");
+                if(modelState != null) {
+                    JsonArray messages = modelState.getAsJsonArray("");
+                    if(messages != null && messages.size() >0){
+                        Toast.makeText(context, messages.get(0).getAsString(), Toast.LENGTH_LONG).show();
+                    }
+                }
             } else {
                 Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
             }
@@ -246,6 +255,13 @@ public class RegisterActivity extends ActionBarActivity{
         }
         if( !isPasswordValid(passwordEditText.getText().toString())) {
             passwordEditText.setError(String.format(res.getString(R.string.password_short), Constants.PASSWORD_MIN_LENGTH));
+            return false;
+        }
+
+        String confirmPass = confirmPasswordEditText.getText().toString();
+        String pass = passwordEditText.getText().toString();
+        if(!confirmPass.equals(pass)){
+            confirmPasswordEditText.setError(res.getString(R.string.confirm_password_mismatch));
             return false;
         }
         return true;

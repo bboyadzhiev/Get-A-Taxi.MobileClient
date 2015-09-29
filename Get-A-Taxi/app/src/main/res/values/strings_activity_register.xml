@@ -24,4 +24,5 @@
     <string name="invalid_email">Invalid e-mail!</string>
     <string name="email_required">E-mails is required</string>
     <string name="password_short">Password should be more than %d symbols!</string>
+    <string name="confirm_password_mismatch">Confirmation password is not the same!</string>
 </resources>

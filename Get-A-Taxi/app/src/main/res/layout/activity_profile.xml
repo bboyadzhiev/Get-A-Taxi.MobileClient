@@ -10,7 +10,9 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:id="@+id/textView" />
+        android:id="@+id/textView"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        />
 
 
     <RelativeLayout
@@ -57,7 +59,9 @@
         android:id="@+id/setPhotoButton"
         android:layout_below="@id/changePhotoButton"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp" />
+        android:layout_marginTop="10dp"
+        android:visibility="invisible"
+        />
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -65,7 +69,9 @@
         android:id="@+id/removePhotoButton"
         android:layout_below="@id/changePhotoButton"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp" />
+        android:layout_marginTop="10dp"
+        android:visibility="invisible"
+        />
 
     <!-- Progress Bar -->
     <ProgressBar

@@ -18,6 +18,10 @@ public final class Constants {
     //public static final String DEFAULT_URL = "http://192.168.43.245:14938";
     public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
 
+    public static final double INIT_LAT= 42.68243;
+    public static final double INIT_LON= 25.29052;
+    public static final int INIT_ZOOM = 6;
+
     // Tracking hub
     public static final String HUB_ENDPOINT = "/signalr";
     public static final String HUB_PROXY = "trackingHub";
@@ -51,7 +55,7 @@ public final class Constants {
     public static final int WRITE_TIMEOUT = 5000;
 
     // CONSTRAINTS
-    public static final int PASSWORD_MIN_LENGTH = 4;
+    public static final int PASSWORD_MIN_LENGTH = 6;
     public static final int EMAIL_MIN_LENGTH = 4;
 
 

@@ -18,9 +18,10 @@
             android:layout_toLeftOf="@+id/startAddress_btn"
             android:layout_toStartOf="@+id/startAddress_btn"
             android:layout_alignBottom="@+id/startAddress_btn"
-            android:hint="@string/enter_current_address"
+            android:hint="@string/looking_up_location"
             android:layout_alignParentTop="true"
             android:background="@color/background_material_light"
+            android:enabled="false"
             />
         <ImageButton
             android:id="@+id/startAddress_btn"
@@ -41,6 +42,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/startGroup"
+        android:layout_marginTop="5dp"
         >
         <EditText
             android:id="@+id/destinationAddress"
@@ -73,6 +75,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/destinationGroup"
+        android:layout_marginTop="5dp"
         >
         <EditText
             android:id="@+id/commentEditText"
